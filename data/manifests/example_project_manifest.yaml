@@ -1,0 +1,6 @@
+project: example
+version: 0.2.0-full
+input_audio: examples/input/vocal.wav
+reference_voice: examples/reference_voice/reference.wav
+output_audio: examples/output/output.wav
+license_mode: own-recording

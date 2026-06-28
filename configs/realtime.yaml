@@ -1,0 +1,36 @@
+# Profile realtime dla monitoringu i przyszłego przetwarzania niskolatencyjnego.
+# Im mniejszy blocksize, tym niższa latencja, ale większe ryzyko dropów/trzasków.
+
+profiles:
+  safe:
+    samplerate: 48000
+    blocksize: 1024
+    latency: "high"
+    channels: 1
+    description: "Stabilny test na słabszym sprzęcie, wysoka latencja."
+
+  balanced:
+    samplerate: 48000
+    blocksize: 512
+    latency: "low"
+    channels: 1
+    description: "Domyślny profil startowy dla laptopa."
+
+  low:
+    samplerate: 48000
+    blocksize: 256
+    latency: "low"
+    channels: 1
+    description: "Niższa latencja, możliwe trzaski na słabszym sprzęcie."
+
+  realtime_experimental:
+    samplerate: 48000
+    blocksize: 128
+    latency: "low"
+    channels: 1
+    description: "Eksperymentalny profil preview; nie do ciężkich modeli AI."
+
+engine:
+  default_profile: "balanced"
+  allow_heavy_ai_in_callback: false
+  overflow_warning: true

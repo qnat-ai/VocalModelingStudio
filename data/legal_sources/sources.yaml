@@ -1,0 +1,19 @@
+sources:
+  - name: MusicBrainz
+    type: metadata
+    license: CC0/core-data
+  - name: ccMixter
+    type: stems_acapella
+    license: Creative Commons per item
+  - name: Freesound
+    type: samples
+    license: Creative Commons per item
+  - name: Internet Archive
+    type: archive
+    license: per item
+  - name: MUSDB18-HQ
+    type: dataset_stems
+    license: research terms
+  - name: MedleyDB
+    type: dataset_multitrack
+    license: check terms

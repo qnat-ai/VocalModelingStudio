@@ -1,0 +1,10 @@
+[project]
+name = "vocal-modeling-studio"
+version = "0.2.1"
+description = "Local vocal modeling pipeline with offline editing and low-latency audio device foundations."
+requires-python = ">=3.11"
+authors = [{ name = "AQnat" }]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

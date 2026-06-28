@@ -1,0 +1,105 @@
+audio:
+  sample_rate: 48000
+  mono: false
+  normalize_peak_db: -1.0
+  cleanup:
+    remove_dc_offset: true
+    fade_ms: 5.0
+    noise_gate_db: -55.0
+    trim_silence_enabled: false
+    trim_silence_db: -60.0
+    gain_stage_target_db: -20.0
+
+processing:
+  denoise_enabled: false
+  split_vocals_enabled: false
+  demucs_binary: demucs
+  demucs_model: htdemucs
+  demucs_strict: false
+  pitch_correction_enabled: true
+  pitch_strength: 0.65
+  key_detection_enabled: true
+  target_key: null
+  voice_conversion_enabled: false
+  voice_conversion:
+    backend: rvc_cli
+    rvc_binary: rvc
+    device: cuda
+    strict: false
+
+paths:
+  projects_dir: data/projects
+  work_dir: data/work
+  output_dir: data/output
+  logs_dir: logs
+  audacity_in_dir: data/work/audacity_in
+  audacity_out_dir: data/work/audacity_out
+
+mastering:
+  enable_highpass: true
+  highpass_hz: 80.0
+  compressor_threshold_db: -18.0
+  compressor_ratio: 2.0
+  limiter_ceiling_db: -1.0
+  makeup_gain_db: 0.0
+  adaptive_enabled: true
+  adaptive_target_rms_dbfs: -18.0
+  adaptive_min_ratio: 1.4
+  adaptive_max_ratio: 3.5
+  adaptive_max_makeup_db: 6.0
+  air_amount: 0.0
+  air_cutoff_hz: 9000.0
+  stereo_width: 1.0
+  deesser_enabled: false
+
+integration:
+  external_fx:
+    enabled: false
+    strict: false
+    command_preset: wrapper_cleanup
+    command_template: []
+    preset: wrapper_cleanup
+    preset_library:
+      wrapper_cleanup:
+        - python
+        - tools/external_fx_chain.py
+        - --input
+        - "{input}"
+        - --output
+        - "{output}"
+        - --preset
+        - "{preset}"
+      wrapper_broadcast_vocal:
+        - python
+        - tools/external_fx_chain.py
+        - --input
+        - "{input}"
+        - --output
+        - "{output}"
+        - --preset
+        - "{preset}"
+      rx_chain_cli:
+        - rx_cli
+        - --input
+        - "{input}"
+        - --output
+        - "{output}"
+        - --preset
+        - "{preset}"
+
+quality_guardrails:
+  max_true_peak_dbfs: -1.0
+  min_loudness_dbfs: -19.0
+  max_loudness_dbfs: -14.0
+  max_clipped_samples: 0
+  min_crest_factor_db: 4.5
+  fail_safe_enabled: true
+  neutral_mastering:
+    enable_highpass: true
+    highpass_hz: 80.0
+    compressor_threshold_db: -12.0
+    compressor_ratio: 1.3
+    limiter_ceiling_db: -6.0
+    makeup_gain_db: 0.0
+    adaptive_enabled: false
+

@@ -1,0 +1,10 @@
+# Przykładowe makro Audacity do ręcznego utworzenia w Audacity:
+# Tools / Narzędzia -> Macro Manager
+#
+# Kolejność przykładowa:
+# 1. Normalize: PeakLevel="-1" RemoveDcOffset="1"
+# 2. Compressor: Threshold="-18" NoiseFloor="-40" Ratio="2.5" AttackTime="0.2" ReleaseTime="1.0"
+# 3. FilterCurve: lekki high-pass ok. 80 Hz
+# 4. ExportWav
+#
+# Uwaga: nazwy komend mogą się różnić zależnie od wersji Audacity i języka interfejsu.

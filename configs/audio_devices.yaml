@@ -1,0 +1,29 @@
+# Konfiguracja urządzeń audio dla VocalModelingStudio.
+# Na Windows preferowany jest ASIO, jeżeli sounddevice/PortAudio widzi ASIO4ALL.
+
+preferred:
+  hostapi_keywords:
+    - "ASIO"
+  input_device_keywords:
+    - "ASIO4ALL"
+    - "ASIO"
+  output_device_keywords:
+    - "ASIO4ALL"
+    - "ASIO"
+
+fallback:
+  hostapi_keywords:
+    - "Windows WASAPI"
+    - "WASAPI"
+    - "Windows DirectSound"
+    - "MME"
+
+runtime:
+  default_profile: "balanced"
+  samplerate: 48000
+  channels: 1
+  dtype: "float32"
+
+notes:
+  - "Jeżeli nie widzisz ASIO4ALL, pipowa biblioteka sounddevice może używać PortAudio bez ASIO."
+  - "ASIO4ALL jako sterownik konfiguruje się głównie w panelu ASIO4ALL, nie w Pythonie."
