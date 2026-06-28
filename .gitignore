@@ -1,26 +1,62 @@
+# Ignore Python bytecode and caches
 __pycache__/
 *.py[cod]
 *.pyc
 .pytest_cache/
+
+# Virtual environments
 .venv/
 venv/
+
+# IDE folders
+.idea/
+.vscode/
+
+# Environment files
 .env
-logs/
+
+# Logs
 logs/*
 !logs/.gitkeep
+
+# Generated data — keep directory structure via .gitkeep
+data/input/*
+!data/input/.gitkeep
 data/work/*
 !data/work/.gitkeep
 data/output/*
 !data/output/.gitkeep
 data/projects/*
 !data/projects/.gitkeep
+
+# Examples
 examples/input/*
 examples/output/*
 examples/reference_voice/*
 !examples/input/.gitkeep
 !examples/output/.gitkeep
 !examples/reference_voice/.gitkeep
-models/*.pth
-models/*.pt
-models/*.onnx
-models/*.index
+
+# Audio files (raw / large binary assets)
+*.wav
+*.mp3
+*.flac
+*.aiff
+*.aif
+*.ogg
+*.m4a
+
+# Model weights
+models/*
+!models/.gitkeep
+
+# Archives
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+
+# Download cache
+downloads/*
+!downloads/.gitkeep

@@ -1,28 +1,33 @@
 # CHANGELOG
 
-## v0.2.1 — patch 001
+ś## v0.1.0 — 2026-06-28
 
 ### Dodano
-- Moduł `app/audio_devices/` do wykrywania i wyboru urządzeń audio.
-- Moduł `app/realtime/` jako fundament pod monitoring i przetwarzanie o niskiej latencji.
-- Konfiguracje `configs/audio_devices.yaml` i `configs/realtime.yaml`.
-- Narzędzie `tools/list_audio_devices.py` do sprawdzania urządzeń widocznych przez `sounddevice`/PortAudio.
-- Narzędzie `tools/test_realtime_monitor.py` do ostrożnego testu streamu realtime.
-- Dokumentację `docs/ASIO4ALL_REALTIME_PL.md`.
-- Testy konfiguracji audio i realtime.
+- Batch processing CLI (`--input-dir`, `--recursive`, `--pattern`, `--batch-limit`, `--continue-on-error`, `--batch-summary-json`) w `main.py` i `app/cli/batch_runner.py`.
+- Per-run session folder management (`app/core/session.py`) — każdy render trafia do `data/projects/<timestamp>_<name>/`.
+- Centralny logger (`app/utils/logging.py`) — `logs/vms.log` i per-sesyjny `logs/render_*.log`.
+- Standardowy format kształtu audio — mono `(samples,)`, stereo `(samples, channels)` — w `app/audio/format.py`.
+- Lekki etap czyszczenia audio (`app/audio/cleanup.py`): DC offset removal, fade safety, noise gate, trim silence, gain staging.
+- Modularne etapy masteringu (`app/mastering/stages.py`, `meters.py`, `presets.py`).
+- Adaptacyjny mastering z profilowaniem per-run.
+- Guardrails jakości z fail-safe neutral preset.
+- Raporty `before/after/delta` i `guardrails` per-sesja.
+- Detekcja tonacji (`app/analysis/key_detector.py`) na bazie chroma CQT.
+- Raport pitch z mapowaniem F0 → nuta + odchylenie centowe.
+- `DemucsPlugin` — aktywna separacja wokalu przez CLI.
+- `ExternalFxBridge` z `strict` mode i biblioteką presetów (`preset_library`).
+- Narzędzie `tools/external_fx_chain.py` z presetami `wrapper_cleanup` i `wrapper_broadcast_vocal`.
+- API search dla Freesound i Archive.org w `search_sources.py` (`--freesound`, `--archive`, `--download-legal`).
+- Walidacja konfiguracji YAML (`app/utils/config.py`).
+- `.gitignore` — pełne wykluczenie artefaktów, audio, modeli i cache.
+- Placeholder `.gitkeep` w `data/work`, `data/output`, `data/projects`.
 
 ### Zmieniono
-- `README.md` opisuje aktualny zakres: ręcznie ładowane audio, bez Cubase, z przygotowaniem pod ASIO4ALL.
-- `requirements.txt` zawiera `sounddevice` jako zależność dla realtime I/O.
-- `pyproject.toml` podniesiony do wersji 0.2.1.
+- `VERSION` → `0.1.0`.
+- `README.md` — ujednolicony tytuł, tabela statusu funkcji, opis session folderów i search CLI.
+- `CHANGELOG.md` — przepisany pod nowy schemat wersjonowania.
 
 ### Decyzje projektowe
-- Ciężkie modele AI nie są uruchamiane w callbacku audio. Callback ma być lekki, żeby unikać dropów i trzasków.
-- Tryb realtime traktujemy jako monitoring/preview. Finalne czyszczenie, pitch correction i voice conversion pozostają domyślnie offline.
-
-## v0.2.0 — full
-
-- Pełny snapshot projektu.
-- Dodane moduły `plugins`, `analysis`, `ai`, `mastering`, `export`, `search`.
-- Dodane szkielety pod Audacity, Cubase, Melodyne, RX, Demucs, DeepFilterNet, RVC, Seed-VC, RMVPE.
-- Dodane `VERSION`, `CHANGELOG.md`, `PACKAGING.md`.
+- Wersja startowa `0.1.0` — projekt jest teraz spójnym, publicznym repozytorium.
+- Ciężkie modele AI (DeepFilterNet, RVC, Seed-VC) pozostają placeholderami z interfejsem gotowym do podpięcia.
+- Pitch correction jest na razie nieinwazyjna — raport diagnostyczny, bez modyfikacji audio.

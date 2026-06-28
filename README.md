@@ -1,4 +1,6 @@
-# Vocal Modeling Studio — v0.2.1 patch 001
+# Vocal Modeling Studio — 0.1.0
+
+> Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, search CLI.
 
 Projekt Python/PyCharm do lokalnej edycji partii wokalnych: import ręcznie wskazanej ścieżki audio, analiza, czyszczenie, korekcja wysokości dźwięków, przygotowanie pod voice conversion oraz eksport wyników.
 
@@ -22,28 +24,28 @@ Na tym etapie zakładamy:
 2. Utwórz virtualenv, najlepiej Python 3.11 albo 3.12.
 3. Zainstaluj zależności:
 
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 4. Włóż plik audio do:
 
-```text
-data/input/
-```
+    ```text
+    data/input/
+    ```
 
 5. Uruchom pipeline offline:
 
-```bash
-python main.py --input data/input/moj_wokal.wav
-```
+    ```bash
+    python main.py --input data/input/moj_wokal.wav
+    ```
 
-Batch processing (folder wejściowy):
+   Batch processing (folder wejściowy):
 
-```bash
-python main.py --input-dir data/input --pattern "*.wav" --recursive --continue-on-error
-python main.py --input-dir data/input --pattern "*.mp3" --batch-limit 20 --batch-summary-json data/work/batch_summary.json
-```
+    ```bash
+    python main.py --input-dir data/input --pattern "*.wav" --recursive --continue-on-error
+    python main.py --input-dir data/input --pattern "*.mp3" --batch-limit 20 --batch-summary-json data/work/batch_summary.json
+    ```
 
 ## Tryb audio devices / ASIO4ALL
 
@@ -110,15 +112,21 @@ Program może:
 
 Program nie zastępuje panelu ASIO4ALL. Ustawienie bufora sterownika, włączenie urządzeń WDM i diagnostyka trzasków zwykle odbywa się w panelu ASIO4ALL.
 
-## Struktura dodana w v0.2.1
+## Struktura projektu (0.1.0)
 
 ```text
 app/audio_devices/       # wykrywanie urządzeń, profile latencji, ustawienia
 app/realtime/            # engine monitoringu i diagnostyka realtime
+app/mastering/           # modularne etapy masteringu (stages, meters, presets)
+app/core/session.py      # per-run session folder management
+app/cli/batch_runner.py  # batch processing helpers
+app/utils/logging.py     # centralny logger
 configs/audio_devices.yaml
 configs/realtime.yaml
+configs/default.yaml
 tools/list_audio_devices.py
 tools/test_realtime_monitor.py
+tools/external_fx_chain.py
 docs/ASIO4ALL_REALTIME_PL.md
 ```
 
@@ -128,7 +136,7 @@ docs/ASIO4ALL_REALTIME_PL.md
 pytest
 ```
 
-## Nowe moduły automatyzacji (v0.2.1+)
+## Aktywne moduły
 
 W projekcie są już aktywne rozszerzenia pod produkcyjny workflow:
 
@@ -173,6 +181,7 @@ quality_guardrails:
 | Quality report (`before/after/delta/guardrails`) | działa |
 | Mastering basic + adaptive + fail-safe | działa |
 | Audacity export | działa |
+| Batch processing | działa |
 | Realtime diagnostics / monitoring | działa częściowo |
 | Pitch correction audio rewrite | placeholder (na razie raport F0 + nuty) |
 | Voice conversion (`rvc_cli`) | placeholder / opcjonalny backend |
@@ -207,12 +216,3 @@ python search_sources.py --title "public domain vocals" --archive --download-leg
 
 Tryb `--download-legal` pobiera wyłącznie wyniki sklasyfikowane jako `safe`.
 
-## Paczkowanie
-
-Ta paczka jest patchem: zawiera kompletne zmienione/dodane pliki, ale nie pełny projekt. Bazą jest:
-
-```text
-VocalModelingStudio_v0.2.0_full.zip
-```
-
-Szczegóły: `PATCH_NOTES.md`.
