@@ -1,10 +1,10 @@
-# Vocal Modeling Studio — 0.1.3
+# Vocal Modeling Studio — 0.1.4
 
 > Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, GUI Gradio, integracja Applio.
 
 Projekt Python/PyCharm do lokalnej edycji partii wokalnych: import ręcznie wskazanej ścieżki audio, analiza, czyszczenie, korekcja wysokości dźwięków, przygotowanie pod voice conversion oraz eksport wyników.
 
-Ta wersja skupia się na **lokalnym workflow bez Cubase** i dodaje fundament pod **niską latencję / ASIO4ALL / sounddevice**.
+Ta wersja skupia się na **lokalnym workflow bez zewnętrznego DAW (np. Cubase)** i dodaje fundament pod **niską latencję / ASIO4ALL / sounddevice**.
 
 ## Aktualny zakres projektu
 
@@ -12,8 +12,8 @@ Na tym etapie zakładamy:
 
 - ręczne ładowanie pliku WAV/MP3/FLAC,
 - lokalną edycję i mastering ścieżki,
-- opcjonalne użycie Audacity jako zewnętrznego edytora pomocniczego,
-- brak integracji z Cubase,
+- opcjonalne użycie zewnętrznego edytora (Audacity, Melodyne) jako narzędzia pomocniczego,
+- brak bezpośredniej integracji z DAW (np. Cubase) — programy te działają niezależnie,
 - brak automatyzacji portali typu Suno/MakeBestMusic,
 - przygotowanie do monitoringu realtime przez `sounddevice`,
 - optymalizację pod sprzęt przez profile latencji i wybór sterownika/urządzenia audio.
@@ -118,7 +118,7 @@ Program może:
 
 Program nie zastępuje panelu ASIO4ALL. Ustawienie bufora sterownika, włączenie urządzeń WDM i diagnostyka trzasków zwykle odbywa się w panelu ASIO4ALL.
 
-## Struktura projektu (0.1.3)
+## Struktura projektu (0.1.4)
 
 ```text
 app/audio_devices/       # wykrywanie urządzeń, profile latencji, ustawienia
@@ -202,7 +202,7 @@ quality_guardrails:
 | Import WAV/MP3 | działa |
 | Quality report (`before/after/delta/guardrails`) | działa |
 | Mastering basic + adaptive + fail-safe | działa |
-| Audacity export | działa |
+| Audacity / Melodyne export | działa (eksport do plików tymczasowych/wav) |
 | Batch processing | działa |
 | Realtime diagnostics / monitoring | działa częściowo |
 | Pitch correction audio rewrite | placeholder (na razie raport F0 + nuty) |

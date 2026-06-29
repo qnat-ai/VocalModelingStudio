@@ -33,7 +33,8 @@ def placeholder_pitch_correction(audio: np.ndarray, sr: int, strength: float = 0
     """Miejsce na prawdziwą korekcję nut.
 
     W wersji MVP nie zmieniamy destrukcyjnie audio, żeby nie pogorszyć jakości.
-    Docelowo tutaj można podpiąć Rubber Band, pyworld, RMVPE albo algorytm melody-to-scale.
+    Docelowo tutaj można podpiąć Rubber Band, pyworld, RMVPE, algorytm melody-to-scale,
+    albo wyeksportować ścieżkę do profesjonalnej korekcji w zewnętrznym programie (np. Melodyne).
     """
     _ = sr, strength
     return audio

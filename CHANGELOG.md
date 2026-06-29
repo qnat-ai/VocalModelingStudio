@@ -2,6 +2,12 @@
 
 ## [0.1.4] — 2026-06-30
 
+### Zmieniono
+- Zaktualizowano `README.md`: uogólniono workflow (zmiana "bez Cubase" na "bez zewnętrznego DAW"), dodano Melodyne jako przykład wspieranego edytora zewnętrznego.
+- Doprecyzowano status integracji z DAW i profesjonalnymi narzędziami edytorskimi.
+- Dodano wzmiankę o Melodyne w komentarzach technicznych `app/audio/pitch.py`.
+- Poprawiono spójność informacji o roli ASIO w projekcie (fundament pod niską latencję).
+
 ### Dodano
 - Mechanizm dwukierunkowej synchronizacji zamknięcia: zamknięcie wszystkich kart przeglądarki automatycznie kończy proces serwera (heartbeat mechanism).
 - Ostrzeżenie przed przypadkowym zamknięciem karty przeglądarki (JavaScript `onbeforeunload`) w interfejsie Gradio.
