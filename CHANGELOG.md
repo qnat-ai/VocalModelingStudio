@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.4] — 2026-06-30
+
+### Dodano
+- Mechanizm dwukierunkowej synchronizacji zamknięcia: zamknięcie wszystkich kart przeglądarki automatycznie kończy proces serwera (heartbeat mechanism).
+- Ostrzeżenie przed przypadkowym zamknięciem karty przeglądarki (JavaScript `onbeforeunload`) w interfejsie Gradio.
+
 ## [0.1.3] — 2026-06-29
 
 ### Zmieniono

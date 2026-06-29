@@ -1,6 +1,8 @@
 import logging
 import os
 import sys
+import threading
+import time
 from pathlib import Path
 
 # Fix dla bezpośredniego uruchamiania pliku z podkatalogu
@@ -15,13 +17,41 @@ from app.utils.logging import setup_logging
 
 logger = logging.getLogger("vms.gui")
 
+# Zmienne globalne do monitorowania aktywności
+last_heartbeat = time.time()
+active_clients = 0
+heartbeat_lock = threading.Lock()
 
 def create_ui(pipeline: VocalPipeline):
     with gr.Blocks(title="Vocal Modeling Studio") as demo:
         gr.Markdown("# 🎙️ Vocal Modeling Studio")
         gr.Markdown(
-            "Wgraj swój wokal, wybierz próbkę referencyjną i pozwól AI zająć się resztą."
+            "Wgraj swój wokal, wybierz próbkę referencyjną i pozwól AI zająć się resztą. "
+            "(Uwaga: Alerty bezpieczeństwa w przeglądarce wymagają co najmniej jednej interakcji ze stroną)."
         )
+
+        # Skrypt JavaScript do ostrzegania i bicia serca (heartbeat)
+        demo.load(None, None, None, js="""
+            () => {
+                // Ostrzeżenie przed zamknięciem
+                window.addEventListener('beforeunload', function (e) {
+                    // Standardowe wymuszenie alertu w nowoczesnych przeglądarkach
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return "Czy na pewno chcesz opuścić stronę? Procesy w tle mogą zostać przerwane.";
+                });
+
+                // Funkcja bicia serca informująca serwer, że karta jest otwarta
+                function sendHeartbeat() {
+                    // Wykorzystujemy ukryty przycisk lub bezpośrednie wywołanie API Gradio jeśli możliwe, 
+                    // ale najprościej wywołać funkcję Gradio przez interfejs
+                    const btn = document.getElementById('heartbeat_btn');
+                    if (btn) btn.click();
+                }
+
+                setInterval(sendHeartbeat, 5000); // Co 5 sekund
+            }
+        """)
 
         with gr.Row():
             with gr.Column():
@@ -41,11 +71,22 @@ def create_ui(pipeline: VocalPipeline):
                     )
                 
                 run_btn = gr.Button("Uruchom Pipeline", variant="primary")
+                
+                # Ukryty komponent do heartbeat
+                heartbeat_btn = gr.Button("HB", elem_id="heartbeat_btn", visible=False)
 
             with gr.Column():
                 output_audio = gr.Audio(label="Wynik (Processed)")
                 output_path_display = gr.Textbox(label="Ścieżka do projektu", interactive=False)
                 logs = gr.Textbox(label="Status / Logi", interactive=False)
+
+        def heartbeat():
+            global last_heartbeat
+            with heartbeat_lock:
+                last_heartbeat = time.time()
+            return None
+
+        heartbeat_btn.click(fn=heartbeat, inputs=[], outputs=[])
 
         def process(input_path, ref_path, audacity_flag, vc_flag):
             if not input_path:
@@ -86,6 +127,22 @@ def launch(config_path: str = "configs/default.yaml", prevent_thread_lock: bool 
     
     pipeline = VocalPipeline(config=config)
     ui = create_ui(pipeline)
+    
+    # Wątek monitorujący aktywność klientów
+    def monitor_activity():
+        # Dajemy czas na start i otwarcie przeglądarki
+        time.sleep(15)
+        while True:
+            time.sleep(5)
+            with heartbeat_lock:
+                # Jeśli ostatni heartbeat był dawniej niż 15 sekund temu, zamykamy
+                if time.time() - last_heartbeat > 15:
+                    logger.warning("Brak aktywnych kart przeglądarki. Zamykanie serwera...")
+                    os._exit(0) # Brutalne ale skuteczne zamknięcie procesu
+
+    monitor_thread = threading.Thread(target=monitor_activity, daemon=True)
+    monitor_thread.start()
+
     ui.launch(show_error=True, prevent_thread_lock=prevent_thread_lock, inbrowser=True)
 
 
