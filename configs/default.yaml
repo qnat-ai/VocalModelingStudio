@@ -22,10 +22,37 @@ processing:
   target_key: null
   voice_conversion_enabled: false
   voice_conversion:
-    backend: rvc_cli
+    backend: applio_gradio
+    strict: false
+    # rvc_cli settings (legacy backend, kept for tools that expose a real
+    # `rvc --input ... --output ...` binary; Applio does not, so this is
+    # unused by the applio_gradio backend below).
     rvc_binary: rvc
     device: cuda
-    strict: false
+    # applio_gradio settings: talk to a locally running Applio instance
+    # through its built-in Gradio API.
+    #
+    # IMPORTANT: api_name and param_map below are PLACEHOLDERS. Applio's
+    # internal Gradio wiring is not a stable, documented public contract,
+    # so the real endpoint name and parameter names must be confirmed
+    # against your own running instance before voice conversion will do
+    # anything other than pass audio through unchanged:
+    #
+    #   1. Start Applio (run-applio.bat) and note the URL it prints.
+    #   2. python app/engines/applio/probe.py --url http://127.0.0.1:6969
+    #   3. Copy the real inference endpoint name into api_name below, and
+    #      map its real parameter names in param_map.
+    #
+    # Until step 3 is done, this backend safely no-ops (or raises, if
+    # strict: true) instead of guessing and silently doing nothing useful.
+    applio:
+      url: http://127.0.0.1:6969
+      api_name: null  # e.g. "/run" -- fill in after running applio_probe.py
+      output_key: 0   # index (or dict key) of the output audio path in the predict() result
+      param_map:
+        input_audio: audio_in        # placeholder -- confirm real name via applio_probe.py
+        reference_audio: voice_model  # placeholder -- confirm real name via applio_probe.py
+      extra_params: {}  # optional: additional fixed parameters Applio's endpoint expects
 
 paths:
   projects_dir: data/projects

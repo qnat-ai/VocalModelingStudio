@@ -21,9 +21,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reference", default=None, help="Opcjonalna próbka głosu docelowego")
     parser.add_argument("--config", default="configs/default.yaml")
     parser.add_argument("--audacity-export", action="store_true", help="Eksport pliku roboczego dla Audacity")
+    parser.add_argument("--gui", action="store_true", help="Uruchom interfejs graficzny Gradio")
     args = parser.parse_args()
-    if bool(args.input) == bool(args.input_dir):
-        parser.error("Podaj dokładnie jedno: --input albo --input-dir")
+    if not args.gui:
+        if bool(args.input) == bool(args.input_dir):
+            parser.error("Podaj dokładnie jedno: --input albo --input-dir (chyba że używasz --gui)")
     if args.batch_limit < 0:
         parser.error("--batch-limit nie może być ujemny")
     return args
@@ -31,6 +33,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    
+    if args.gui:
+        from app.gui.gradio.interface import launch
+        launch(config_path=args.config)
+        return
+
     config = load_config(Path(args.config))
     pipeline = VocalPipeline(config=config)
 

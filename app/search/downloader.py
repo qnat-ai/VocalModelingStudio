@@ -84,14 +84,20 @@ def search_archive_org(query: str, *, limit: int = 10) -> list[SearchResult]:
         if not identifier:
             continue
         item_url = f"https://archive.org/details/{identifier}"
+        license_url = item.get("licenseurl")
         results.append(
             SearchResult(
                 source="Archive.org",
                 title=str(item.get("title", identifier)),
                 artist=item.get("creator"),
                 url=item_url,
-                license_name="public domain" if item.get("licenseurl") else None,
-                license_url=item.get("licenseurl"),
+                # Do not guess "public domain" just because *some* licenseurl
+                # is present -- archive.org licenseurl values are most often
+                # specific Creative Commons licenses, not public domain.
+                # Leave license_name unset and let classify_license() inspect
+                # the actual license_url text instead.
+                license_name=None,
+                license_url=license_url,
                 result_type="dataset",
                 extra={"identifier": identifier},
             )

@@ -7,3 +7,5 @@ pedalboard>=0.9
 pyyaml>=6.0
 rich>=13.0
 sounddevice>=0.5.1
+gradio>=4.0.0
+gradio_client>=1.0.0

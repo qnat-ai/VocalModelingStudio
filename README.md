@@ -1,6 +1,6 @@
-# Vocal Modeling Studio — 0.1.0
+# Vocal Modeling Studio — 0.1.3
 
-> Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, search CLI.
+> Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, GUI Gradio, integracja Applio.
 
 Projekt Python/PyCharm do lokalnej edycji partii wokalnych: import ręcznie wskazanej ścieżki audio, analiza, czyszczenie, korekcja wysokości dźwięków, przygotowanie pod voice conversion oraz eksport wyników.
 
@@ -21,20 +21,26 @@ Na tym etapie zakładamy:
 ## Szybki start w PyCharm
 
 1. Otwórz folder projektu w PyCharm.
-2. Utwórz virtualenv, najlepiej Python 3.11 albo 3.12.
+2. Skonfiguruj interpreter Python 3.11.
 3. Zainstaluj zależności:
 
     ```bash
     pip install -r requirements.txt
     ```
 
-4. Włóż plik audio do:
+4. Uruchom interfejs graficzny (zalecane):
 
-    ```text
-    data/input/
+    ```bash
+    .\run-gui.bat
     ```
 
-5. Uruchom pipeline offline:
+    Lub przez CLI:
+
+    ```bash
+    python main.py --gui
+    ```
+
+5. Uruchom pipeline offline (stary tryb CLI):
 
     ```bash
     python main.py --input data/input/moj_wokal.wav
@@ -112,22 +118,38 @@ Program może:
 
 Program nie zastępuje panelu ASIO4ALL. Ustawienie bufora sterownika, włączenie urządzeń WDM i diagnostyka trzasków zwykle odbywa się w panelu ASIO4ALL.
 
-## Struktura projektu (0.1.0)
+## Struktura projektu (0.1.3)
 
 ```text
 app/audio_devices/       # wykrywanie urządzeń, profile latencji, ustawienia
 app/realtime/            # engine monitoringu i diagnostyka realtime
 app/mastering/           # modularne etapy masteringu (stages, meters, presets)
+app/gui/gradio/          # interfejs użytkownika Gradio
+app/engines/applio/      # integracja z silnikiem konwersji Applio (Klient API)
 app/core/session.py      # per-run session folder management
 app/cli/batch_runner.py  # batch processing helpers
 app/utils/logging.py     # centralny logger
 configs/audio_devices.yaml
 configs/realtime.yaml
 configs/default.yaml
+run-gui.bat              # szybki start GUI
+run-applio.bat           # pomocniczy skrypt startowy dla serwera Applio
 tools/list_audio_devices.py
 tools/test_realtime_monitor.py
 tools/external_fx_chain.py
 docs/ASIO4ALL_REALTIME_PL.md
+```
+
+## Integracja Applio (Voice Conversion)
+
+Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersji głosu (RVC). 
+
+1. Upewnij się, że Applio jest zainstalowane i działa (domyślnie na http://127.0.0.1:6969).
+2. Sprawdź dostępne punkty końcowe API za pomocą narzędzia:
+   ```bash
+   python app/engines/applio/probe.py --url http://127.0.0.1:6969
+   ```
+3. Skonfiguruj `api_name` oraz `param_map` w `configs/default.yaml` zgodnie z wynikiem powyższego narzędzia.
 ```
 
 ## Testy
@@ -184,10 +206,10 @@ quality_guardrails:
 | Batch processing | działa |
 | Realtime diagnostics / monitoring | działa częściowo |
 | Pitch correction audio rewrite | placeholder (na razie raport F0 + nuty) |
-| Voice conversion (`rvc_cli`) | placeholder / opcjonalny backend |
+| Voice conversion (`applio_gradio`) | działa (wymaga działającego serwera Applio) |
 | DeepFilterNet | placeholder |
-| RVC/Seed-VC pełna integracja modeli | placeholder |
-| GUI (`app/gui/gradio_app.py`) | placeholder |
+| GUI (Gradio) | działa (`main.py --gui`) |
+| API Search (Freesound/Archive) | działa (`search_sources.py`) |
 
 ## Session folder per run
 

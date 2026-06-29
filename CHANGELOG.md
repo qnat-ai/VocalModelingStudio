@@ -1,6 +1,39 @@
 # CHANGELOG
 
-ś## v0.1.0 — 2026-06-28
+## [0.1.3] — 2026-06-29
+
+### Zmieniono
+- Zreorganizowano strukturę katalogów: interfejs Gradio przeniesiony do `app/gui/gradio/`, silnik Applio do `app/engines/applio/`.
+- Wydzielono logikę Applio do osobnego modułu `app/engines/applio/engine.py`.
+- Narzędzie diagnostyczne Applio przeniesione z `tools/applio_probe.py` do `app/engines/applio/probe.py`.
+
+## [0.1.2] — 2026-06-29
+
+### Dodano
+- Interfejs graficzny (GUI) oparty na Gradio, dostępny przez flagę `--gui` w `main.py`.
+- Skrypt `run-gui.bat` do łatwego uruchamiania interfejsu w systemie Windows.
+- Zależność `gradio` w `requirements.txt`.
+
+### Zmieniono
+- `main.py` obsługuje teraz tryb GUI oraz ulepszoną walidację argumentów CLI.
+
+## [0.1.1] — 2026-06-29
+
+### Dodano
+- Integracja z silnikiem Applio przez API Gradio (`applio_gradio` backend w `VoiceConversionEngine`).
+- Narzędzie diagnostyczne `tools/applio_probe.py` do testowania połączenia z serwerem Applio.
+- Przykładowy skrypt `run-applio.bat` ułatwiający uruchamianie zewnętrznego serwera Applio.
+- Nowa zależność `gradio_client` w `requirements.txt`.
+
+### Zmieniono
+- `VoiceConversionEngine` obsługuje teraz dynamiczne przełączanie backendów (rvc_cli, applio_gradio) oraz elastyczne mapowanie parametrów API Applio.
+- Ulepszone narzędzie `tools/applio_probe.py` z pełnym raportowaniem specyfikacji API Gradio.
+
+### Decyzje projektowe
+- Wybór Applio jako rekomendowanej ścieżki rozwoju zamiast archiwalnego fairseq/RVC.
+- Komunikacja z Applio odbywa się przez HTTP/Gradio API, co pozwala na separację środowisk i uniknięcie konfliktów zależności.
+
+## v0.1.0 — 2026-06-28
 
 ### Dodano
 - Batch processing CLI (`--input-dir`, `--recursive`, `--pattern`, `--batch-limit`, `--continue-on-error`, `--batch-summary-json`) w `main.py` i `app/cli/batch_runner.py`.

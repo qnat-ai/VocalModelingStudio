@@ -34,6 +34,13 @@ class SearchResult:
 
     @property
     def is_probably_legal_for_download(self) -> bool:
-        text = f"{self.license_name or ''} {self.license_url or ''}".lower()
-        legal_tokens = ["cc0", "cc-by", "creative commons", "public domain", "royalty-free"]
-        return any(token in text for token in legal_tokens)
+        """Convenience wrapper around the canonical classifier.
+
+        Delegates to ``license_checker.classify_license`` so there is a
+        single source of truth for what counts as a safe license. Importing
+        here (rather than at module scope) avoids a circular import, since
+        ``license_checker`` itself imports ``SearchResult`` from this module.
+        """
+        from app.search.license_checker import classify_license
+
+        return classify_license(self) == "safe"

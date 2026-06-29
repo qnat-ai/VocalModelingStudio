@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from app.search.models import SearchResult
 
 SAFE_LICENSE_KEYWORDS = (
@@ -10,13 +12,21 @@ SAFE_LICENSE_KEYWORDS = (
     "royalty-free",
 )
 
-RESTRICTED_KEYWORDS = (
+# Plain substrings are fine here: each one is long/specific enough that it
+# will not accidentally match unrelated text (unlike a bare "nc").
+RESTRICTED_SUBSTRINGS = (
     "all rights reserved",
     "unknown",
     "copyright",
     "non-commercial",
-    "nc",
+    "noncommercial",
 )
+
+# "nc" (the CC "NonCommercial" abbreviation, e.g. "CC BY-NC") is too short to
+# match as a plain substring -- it would also match unrelated text containing
+# those two letters (names, other words, etc.). Match it only as a standalone
+# token instead.
+_RESTRICTED_WORD_PATTERN = re.compile(r"\bnc\b")
 
 
 def classify_license(result: SearchResult) -> str:
@@ -28,7 +38,9 @@ def classify_license(result: SearchResult) -> str:
     text = f"{result.license_name or ''} {result.license_url or ''}".lower()
     if any(keyword in text for keyword in SAFE_LICENSE_KEYWORDS):
         return "safe"
-    if any(keyword in text for keyword in RESTRICTED_KEYWORDS):
+    if any(keyword in text for keyword in RESTRICTED_SUBSTRINGS):
+        return "restricted"
+    if _RESTRICTED_WORD_PATTERN.search(text):
         return "restricted"
     return "unknown"
 

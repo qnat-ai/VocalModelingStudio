@@ -1,21 +1,32 @@
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import soundfile as sf
 
 from app.audio.format import ensure_audio_shape
+from app.engines.applio.engine import ApplioEngine
+
+logger = logging.getLogger(__name__)
 
 
 class VoiceConversionEngine:
-    """Wrapper na przyszłe modele: RVC, Seed-VC, OpenVoice.
+    """Wrapper na przyszłe modele: RVC, Seed-VC, OpenVoice, Applio.
 
-    Obecnie to bezpieczny placeholder. Nie zmienia audio, ale zachowuje interfejs,
-    dzięki czemu później można łatwo podmienić implementację.
+    Bez `enabled=True` to bezpieczny no-op. Z `enabled=True` wybiera backend
+    przez `config["backend"]`:
+
+      - "applio_gradio": woła lokalnie działającą instancję Applio przez jej
+        wbudowane API Gradio (zalecane, patrz docs/APPLIO_INTEGRATION_PL.md).
+      - "rvc_cli": woła zewnętrzny binarny CLI (zachowane dla narzędzi, które
+        faktycznie wystawiają taki interfejs; Applio go nie wystawia).
+      - dowolna inna wartość / brak: no-op, audio przechodzi bez zmian.
     """
 
     def __init__(self, enabled: bool = False, config: dict | None = None) -> None:
@@ -30,6 +41,9 @@ class VoiceConversionEngine:
         mode = str(self.config.get("backend", "placeholder")).lower()
         if mode == "rvc_cli":
             return self._convert_with_rvc_cli(audio, sr, reference_path)
+        if mode == "applio_gradio":
+            engine = ApplioEngine(config=self.config)
+            return engine.convert(audio, sr, reference_path)
         return audio
 
     def _convert_with_rvc_cli(self, audio: np.ndarray, sr: int, reference_path: Path) -> np.ndarray:
