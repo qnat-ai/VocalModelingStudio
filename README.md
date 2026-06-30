@@ -1,12 +1,12 @@
 # Vocal Modeling Studio — 0.1.4
 
-> Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, GUI Gradio, integracja Applio.
+> Pipeline lokalny, monitoring realtime, ASIO4ALL, sounddevice, batch processing, GUI Gradio, integracja Applio.
 
-Projekt Python/PyCharm do lokalnej edycji partii wokalnych: import ręcznie wskazanej ścieżki audio, analiza, czyszczenie, korekcja wysokości dźwięków, przygotowanie pod voice conversion oraz eksport wyników.
+Projekt Python/PyCharm do lokalnej edycji wokalu: import ścieżki audio, analiza, cleanup, korekcja wysokości i eksport wyników.
 
-Ta wersja skupia się na **lokalnym workflow bez zewnętrznego DAW (np. Cubase)** i dodaje fundament pod **niską latencję / ASIO4ALL / sounddevice**.
+Ta wersja skupia się na **pipeline lokalnym bez zewnętrznego DAW (np. Cubase)** i dodaje fundament pod **niską latencję / ASIO4ALL / sounddevice**.
 
-## Aktualny zakres projektu
+## Zakres
 
 Na tym etapie zakładamy:
 
@@ -18,7 +18,7 @@ Na tym etapie zakładamy:
 - przygotowanie do monitoringu realtime przez `sounddevice`,
 - optymalizację pod sprzęt przez profile latencji i wybór sterownika/urządzenia audio.
 
-## Szybki start w PyCharm
+## Start
 
 1. Otwórz folder projektu w PyCharm.
 2. Skonfiguruj interpreter Python 3.11.
@@ -40,7 +40,7 @@ Na tym etapie zakładamy:
     python main.py --gui
     ```
 
-5. Uruchom pipeline offline (stary tryb CLI):
+5. Uruchom klasyczny tryb CLI (offline):
 
     ```bash
     python main.py --input data/input/moj_wokal.wav
@@ -56,10 +56,10 @@ Na tym etapie zakładamy:
 
     ```bash
     python main.py --input-dir data/input --pattern "*.wav" --recursive --continue-on-error
-    python main.py --input-dir data/input --pattern "*.mp3" --batch-limit 20 --batch-summary-json data/work/batch_summary.json
-    ```
+     python main.py --input-dir data/input --pattern "*.mp3" --batch-limit 20 --batch-summary-json data/work/batch_summary.json
+     ```
 
-## Tryb audio devices / ASIO4ALL
+## Audio devices / ASIO4ALL
 
 Lista urządzeń audio widocznych przez `sounddevice`:
 
@@ -95,9 +95,9 @@ Dokumentacja:
 
 ```text
 docs/ASIO4ALL_REALTIME_PL.md
-```
+     ```
 
-## Główna idea realtime
+## Realtime
 
 ```text
 mikrofon / wejście audio
@@ -111,9 +111,9 @@ monitoring / preview
 tryb offline dla ciężkich modeli AI
 ```
 
-Ważne: DeepFilterNet, RMVPE, RVC, Seed-VC i pitch correction nie powinny być na początku wykonywane bezpośrednio w callbacku realtime. Bezpieczniej jest przetwarzać finalnie offline albo w osobnym wątku/buforze.
+Ważne: DeepFilterNet, RMVPE, RVC, Seed-VC i pitch correction lepiej uruchamiać offline albo w osobnym wątku/buforze.
 
-## ASIO4ALL — założenie
+## ASIO4ALL
 
 Program może:
 
@@ -124,7 +124,7 @@ Program może:
 
 Program nie zastępuje panelu ASIO4ALL. Ustawienie bufora sterownika, włączenie urządzeń WDM i diagnostyka trzasków zwykle odbywa się w panelu ASIO4ALL.
 
-## Struktura projektu (0.1.4)
+## Struktura
 
 ```text
 app/audio_devices/       # wykrywanie urządzeń, profile latencji, ustawienia
@@ -146,11 +146,11 @@ tools/test_realtime_monitor.py
 tools/external_fx_chain.py
 docs/ASIO4ALL_REALTIME_PL.md
 docs/VOCAL_STANDARDIZER_PL.md
-```
+     ```
 
-## Standaryzacja wokalu (Vocal Standardizer)
+## Standaryzacja wokalu
 
-VMS v0.1.4 wprowadza workflow standaryzacji wokalu względem podkładu instrumentalnego.
+VMS v0.1.4 wprowadza tryb standaryzacji wokalu względem podkładu instrumentalnego.
 
 1. Wgraj ścieżkę wokalną i opcjonalnie instrumental (jako referencję).
 2. Wybierz **PORÓWNAJ / ZAPROPONUJ** — VMS przeanalizuje poziomy i zasugeruje optymalny gain.
@@ -159,12 +159,12 @@ VMS v0.1.4 wprowadza workflow standaryzacji wokalu względem podkładu instrumen
    - **CORRECT**: wprowadź ręczną korektę i wygeneruj wynik.
    - **TRY AGAIN**: zresetuj i spróbuj innej analizy.
 
-Głównym wynikiem jest dopasowana ścieżka wokalna. `preview_mix.wav` służy tylko do odsłuchu kontrolnego.
+Głównym wynikiem jest dopasowana ścieżka wokalna. `preview_mix.wav` służy tylko do odsłuchu.
 Dokumentacja: `docs/VOCAL_STANDARDIZER_PL.md`.
 
-## Integracja Applio (Voice Conversion)
+## Applio / Voice Conversion
 
-Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersji głosu. 
+Projekt wykorzystuje zewnętrzny silnik **Applio** do konwersji głosu.
 
 1. Upewnij się, że Applio jest zainstalowane i działa (domyślnie na http://127.0.0.1:6969).
 2. Sprawdź dostępne punkty końcowe API za pomocą narzędzia:
@@ -173,10 +173,10 @@ Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersj
    ```
 3. Skonfiguruj `api_name` oraz `param_map` w `configs/default.yaml` zgodnie z wynikiem powyższego narzędzia.
 
-## Host i backend FX
+## Host i backend
 
-- Wybrany host do workflow zewnętrznego: **REAPER** (najlepszy kompromis automatyzacja/jakość/stabilność).
-- Backend FX w VMS: **FFmpeg** przez `ExternalFxBridge` (preset `ffmpeg_vocal_polish` w `configs/default.yaml`).
+- Wybrany host do pipeline-u zewnętrznego: **REAPER** (najlepszy kompromis automatyzacja/jakość/stabilność).
+- Backend FX w VMS: **FFmpeg** przez `ExternalFxBridge` (`ffmpeg_vocal_polish` w `configs/default.yaml`).
 - Integracje z `iZotope RX`, `Acon`, `Waves`, `Melodyne` są odłożone na później.
 
 ## Testy
@@ -185,9 +185,9 @@ Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersj
 pytest
 ```
 
-## Aktywne moduły
+## Moduły
 
-W projekcie są już aktywne rozszerzenia pod produkcyjny workflow:
+W projekcie są już aktywne rozszerzenia pod produkcyjny pipeline:
 
 - separacja wokalu przez `DemucsPlugin` (CLI),
 - detekcja tonacji (`app/analysis/key_detector.py`),

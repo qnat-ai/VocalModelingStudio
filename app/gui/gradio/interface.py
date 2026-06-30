@@ -25,11 +25,12 @@ from app.utils.logging import setup_logging
 
 logger = logging.getLogger("vms.gui")
 
-# Zmienne globalne do monitorowania aktywności
+# Zmienne globalne do monitorowania aktywności klientów przeglądarki
 last_heartbeat = time.time()
 heartbeat_lock = threading.Lock()
 
 def _standardizer_from_config(config: dict[str, Any], cleanup_overrides: dict[str, Any] | None = None) -> VocalInstrumentalStandardizer:
+    """Tworzy standaryzator wokalu z konfiguracji i opcjonalnych nadpisań."""
     audio_cfg = config.get("audio", {})
     paths_cfg = config.get("paths", {})
     standardization_cfg = config.get("standardization", {})
@@ -50,6 +51,7 @@ def _standardizer_from_config(config: dict[str, Any], cleanup_overrides: dict[st
 
 
 def _safe_path(value: str | None) -> Path | None:
+    """Konwertuje string na Path, jeśli plik istnieje; inaczej None."""
     if not value:
         return None
     path = Path(value)
@@ -62,6 +64,7 @@ def _compare_vocal_standardization(
     instrumental_path: str | None,
     cleanup_overrides: dict[str, Any] | None,
 ) -> tuple[dict[str, Any], str, float, str]:
+    """Analizuje wokal względem instrumentalu i proponuje korektę gain."""
     if not vocal_path:
         return {}, "", 0.0, "Błąd: wgraj ścieżkę wokalną."
 
@@ -94,6 +97,7 @@ def _render_vocal_standardization(
     manual_gain_db: float | int | None,
     cleanup_overrides: dict[str, Any] | None,
 ) -> tuple[str | None, str | None, str, str, str]:
+    """Renderuje przetworzony wokal z zastosowaną korektą."""
     if not state:
         return None, None, "", "", "Najpierw kliknij PORÓWNAJ / ZAPROPONUJ."
 
@@ -134,6 +138,7 @@ def _run_legacy_pipeline(
     reference_path: str | None,
     export_for_audacity: bool,
 ) -> tuple[str | None, str, str]:
+    """Uruchamia klasyczny pipeline przetwarzania audio."""
     if not input_path:
         return None, "", "Błąd: najpierw wgraj plik audio z wokalem."
 
@@ -162,18 +167,18 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
             "VMS zwraca dopasowaną ścieżkę wokalną; instrumental jest tylko referencją."
         )
 
-        # Skrypt JavaScript do ostrzegania i bicia serca (heartbeat)
+        # JavaScript: ostrzeżenie przed zamknięciem i heartbeat
         demo.load(None, None, None, js="""
             () => {
-                // Ostrzeżenie przed zamknięciem
+                // Ostrzeżenie użytkownika przed zamknięciem karty
                 window.addEventListener('beforeunload', function (e) {
-                    // Standardowe wymuszenie alertu w nowoczesnych przeglądarkach
+                    // Standardowy alert w nowoczesnych przeglądarkach
                     e.preventDefault();
                     e.returnValue = '';
                     return "Czy na pewno chcesz opuścić stronę? Procesy w tle mogą zostać przerwane.";
                 });
 
-                // Funkcja bicia serca informująca serwer, że karta jest otwarta
+                // Heartbeat do informowania serwera, że karta jest otwarta
                 function sendHeartbeat() {
                     const btn = document.getElementById('heartbeat_btn');
                     if (btn) btn.click();
@@ -186,9 +191,9 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
         with gr.Tabs():
             with gr.Tab("Standaryzacja wokalu"):
                 gr.Markdown(
-                    "Główny workflow: wgraj ścieżkę wokalną i opcjonalnie instrumental jako referencję. "
+                    "Główny tryb: wgraj ścieżkę wokalną i opcjonalnie instrumental jako referencję. "
                     "VMS zaproponuje korektę wokalu, a po akceptacji wygeneruje `vocal_processed.wav`. "
-                    "`preview_mix.wav` zawiera 20-sekundowy fragment wokół najgłośniejszego momentu wokalu do szybkiej weryfikacji."
+                    "`preview_mix.wav` to 20-sekundowy fragment wokół najgłośniejszego momentu wokalu do szybkiej kontroli."
                 )
                 proposal_state = gr.State({})
                 with gr.Row():
@@ -362,10 +367,10 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                     outputs=[proposal_state, report_text, proposed_gain, status],
                 )
 
-                with gr.Accordion("Klasyczny pipeline VMS / tryb zaawansowany", open=False):
+                with gr.Accordion("Klasyczny tryb / zaawansowany", open=False):
                     gr.Markdown(
                         "Ten tryb uruchamia starszy pipeline analizy/czyszczenia/masteringu. "
-                        "Nie jest głównym workflow standaryzacji względem instrumentalu."
+                        "Nie jest głównym trybem standaryzacji względem instrumentalu."
                     )
                     with gr.Row():
                         legacy_input = gr.Audio(label="Input audio", type="filepath")
@@ -465,16 +470,16 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
             with gr.Tab("Narzędzia / Ustawienia"):
                 gr.Markdown(
                     "### Narzędzia / Ustawienia\n"
-                    "Ta sekcja nie jest głównym workflow. Służy do ustawień technicznych i przyszłych narzędzi pomocniczych:\n\n"
+                    "Ta sekcja nie jest głównym trybem. Służy do ustawień technicznych i przyszłych narzędzi pomocniczych:\n\n"
                     "- lista urządzeń audio / ASIO / WASAPI / sounddevice,\n"
                     "- status backendów, np. Applio,\n"
                     "- ścieżki do narzędzi zewnętrznych, np. ffmpeg,\n"
                     "- rekomendowany host zewnętrzny: REAPER (render/batch),\n"
                     "- informacje o środowisku.\n\n"
-                    "Główny workflow znajduje się w zakładce **Standaryzacja wokalu**."
+                    "Główny tryb znajduje się w zakładce **Standaryzacja wokalu**."
                 )
 
-                # Ukryty komponent do heartbeat
+                # Ukryty komponent heartbeat
                 heartbeat_btn = gr.Button("HB", elem_id="heartbeat_btn", visible=False)
 
                 def heartbeat():
@@ -491,7 +496,7 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
 def launch(config_path: str = "configs/default.yaml", prevent_thread_lock: bool = False) -> None:
     config = load_config(Path(config_path))
     
-    # Inicjalizacja logowania dla GUI
+    # Inicjalizuj logger GUI
     log_dir = Path(config.get("paths", {}).get("logs_dir", "logs"))
     setup_logging(log_dir)
     logger.info("Uruchamianie interfejsu Gradio...")
@@ -499,17 +504,17 @@ def launch(config_path: str = "configs/default.yaml", prevent_thread_lock: bool 
     pipeline = VocalPipeline(config=config)
     ui = create_ui(config=config, pipeline=pipeline)
     
-    # Wątek monitorujący aktywność klientów
+    # Monitor aktywności przeglądarki i zamknij serwer, jeśli żadna karta nie wysyła heartbeat
     def monitor_activity():
-        # Dajemy czas na start i otwarcie przeglądarki
+        # Czas na start i otwarcie przeglądarki
         time.sleep(15)
         while True:
             time.sleep(5)
             with heartbeat_lock:
-                # Jeśli ostatni heartbeat był dawniej niż 15 sekund temu, zamykamy
+                # Zamykamy, jeśli brak heartbeat dłużej niż 15 sekund
                 if time.time() - last_heartbeat > 15:
                     logger.warning("Brak aktywnych kart przeglądarki. Zamykanie serwera...")
-                    os._exit(0) # Brutalne ale skuteczne zamknięcie procesu
+                    os._exit(0)  # Awaryjne zamknięcie procesu
 
     monitor_thread = threading.Thread(target=monitor_activity, daemon=True)
     monitor_thread.start()
@@ -518,7 +523,7 @@ def launch(config_path: str = "configs/default.yaml", prevent_thread_lock: bool 
 
 
 if __name__ == "__main__":
-    # Dodaj root projektu do PYTHONPATH, aby importy 'app.*' działały przy bezpośrednim uruchomieniu
+    # Dodaj root projektu do PYTHONPATH, by importy app.* działały przy bezpośrednim uruchomieniu
     project_root = str(Path(__file__).parent.parent.parent.parent.absolute())
     if project_root not in sys.path:
         sys.path.insert(0, project_root)

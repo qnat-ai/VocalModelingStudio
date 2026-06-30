@@ -28,7 +28,7 @@
 - Przebudowano interfejs Gradio w `app/gui/gradio/interface.py` wokół nowego workflow standaryzacji.
 - "Diagnostyka" w GUI przemianowana na "Narzędzia / Ustawienia".
 - Rozszerzono modele wyszukiwania w `app/search/models.py` o pola `genre` i `license_hint`.
-- Zaktualizowano `README.md`: uogólniono workflow (zmiana "bez Cubase" na "bez zewnętrznego DAW"), dodano Melodyne jako przykład wspieranego edytora zewnętrznego.
+- Zaktualizowano `README.md`: ujednolicono workflow i dopisano Melodyne jako przykład edytora zewnętrznego.
 - Doprecyzowano status integracji z DAW i profesjonalnymi narzędziami edytorskimi.
 - Dodano wzmiankę o Melodyne w komentarzach technicznych `app/audio/pitch.py`.
 - Poprawiono spójność informacji o roli ASIO w projekcie (fundament pod niską latencję).
@@ -97,6 +97,6 @@
 - `CHANGELOG.md` — przepisany pod nowy schemat wersjonowania.
 
 ### Decyzje projektowe
-- Wersja startowa `0.1.4` — projekt jest teraz spójnym, publicznym repozytorium.
+- Wersja startowa `0.1.4` — projekt jest spójnym, publicznym repozytorium.
 - Ciężkie modele AI (DeepFilterNet, RVC, Seed-VC) pozostają placeholderami z interfejsem gotowym do podpięcia.
 - Pitch correction jest na razie nieinwazyjna — raport diagnostyczny, bez modyfikacji audio.
