@@ -124,6 +124,7 @@ Program nie zastępuje panelu ASIO4ALL. Ustawienie bufora sterownika, włączeni
 app/audio_devices/       # wykrywanie urządzeń, profile latencji, ustawienia
 app/realtime/            # engine monitoringu i diagnostyka realtime
 app/mastering/           # modularne etapy masteringu (stages, meters, presets)
+app/standardization/     # standaryzacja wokalu względem instrumentalu
 app/gui/gradio/          # interfejs użytkownika Gradio
 app/engines/applio/      # integracja z silnikiem konwersji Applio (Klient API)
 app/core/session.py      # per-run session folder management
@@ -138,7 +139,22 @@ tools/list_audio_devices.py
 tools/test_realtime_monitor.py
 tools/external_fx_chain.py
 docs/ASIO4ALL_REALTIME_PL.md
+docs/VOCAL_STANDARDIZER_PL.md
 ```
+
+## Standaryzacja wokalu (Vocal Standardizer)
+
+VMS v0.1.4 wprowadza workflow standaryzacji wokalu względem podkładu instrumentalnego.
+
+1. Wgraj ścieżkę wokalną i opcjonalnie instrumental (jako referencję).
+2. Wybierz **PORÓWNAJ / ZAPROPONUJ** — VMS przeanalizuje poziomy i zasugeruje optymalny gain.
+3. Wybierz akcję:
+   - **ACCEPT**: zastosuj propozcyję i wygeneruj `vocal_processed.wav`.
+   - **CORRECT**: wprowadź ręczną korektę i wygeneruj wynik.
+   - **TRY AGAIN**: zresetuj i spróbuj innej analizy.
+
+Głównym wynikiem jest dopasowana ścieżka wokalna. `preview_mix.wav` służy tylko do odsłuchu kontrolnego.
+Dokumentacja: `docs/VOCAL_STANDARDIZER_PL.md`.
 
 ## Integracja Applio (Voice Conversion)
 

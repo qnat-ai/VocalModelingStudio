@@ -2,15 +2,23 @@
 
 ## [0.1.4] — 2026-06-30
 
+### Dodano
+- Nowy moduł `app/standardization/`: standaryzacja wokalu względem instrumentalu (vocal standardizer for instrumental).
+- Workflow standaryzacji: analiza (`analyze`) i generowanie wyniku (`render`) z trybami `ACCEPT`, `CORRECT`, `TRY AGAIN`.
+- Nowy panel w GUI: zakładka "Standaryzacja wokalu" jako główny punkt wejścia.
+- Rozszerzenie "Legal Search": nowe pola wyszukiwania (gatunek, licencja) oraz integracja z GUI (`app/gui/gradio/legal_search_panel.py`).
+- Dokumentacja techniczna modułu standaryzacji: `docs/VOCAL_STANDARDIZER_PL.md`.
+- Mechanizm dwukierunkowej synchronizacji zamknięcia: zamknięcie wszystkich kart przeglądarki automatycznie kończy proces serwera (heartbeat mechanism).
+- Ostrzeżenie przed przypadkowym zamknięciem karty przeglądarki (JavaScript `onbeforeunload`) w interfejsie Gradio.
+
 ### Zmieniono
+- Przebudowano interfejs Gradio w `app/gui/gradio/interface.py` wokół nowego workflow standaryzacji.
+- "Diagnostyka" w GUI przemianowana na "Narzędzia / Ustawienia".
+- Rozszerzono modele wyszukiwania w `app/search/models.py` o pola `genre` i `license_hint`.
 - Zaktualizowano `README.md`: uogólniono workflow (zmiana "bez Cubase" na "bez zewnętrznego DAW"), dodano Melodyne jako przykład wspieranego edytora zewnętrznego.
 - Doprecyzowano status integracji z DAW i profesjonalnymi narzędziami edytorskimi.
 - Dodano wzmiankę o Melodyne w komentarzach technicznych `app/audio/pitch.py`.
 - Poprawiono spójność informacji o roli ASIO w projekcie (fundament pod niską latencję).
-
-### Dodano
-- Mechanizm dwukierunkowej synchronizacji zamknięcia: zamknięcie wszystkich kart przeglądarki automatycznie kończy proces serwera (heartbeat mechanism).
-- Ostrzeżenie przed przypadkowym zamknięciem karty przeglądarki (JavaScript `onbeforeunload`) w interfejsie Gradio.
 
 ## [0.1.3] — 2026-06-29
 

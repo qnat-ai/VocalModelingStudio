@@ -12,9 +12,11 @@ class TrackQuery:
     title: str | None = None
     artist: str | None = None
     isrc: str | None = None
+    genre: str | None = None
+    license_hint: str | None = None
 
     def as_text(self) -> str:
-        parts = [self.artist, self.title, self.isrc]
+        parts = [self.artist, self.title, self.genre, self.license_hint, self.isrc]
         return " ".join(part for part in parts if part).strip()
 
 
