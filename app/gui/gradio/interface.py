@@ -19,6 +19,7 @@ from app.gui.gradio.legal_search_panel import (
     download_selected_safe_result_for_gui,
     search_legal_sources_for_gui,
 )
+from app.gui.gradio.session_manager import SessionManager
 from app.standardization.vocal_standardizer import VocalInstrumentalStandardizer
 from app.utils.config import load_config
 from app.utils.logging import setup_logging
@@ -28,6 +29,9 @@ logger = logging.getLogger("vms.gui")
 # Zmienne globalne do monitorowania aktywności klientów przeglądarki
 last_heartbeat = time.time()
 heartbeat_lock = threading.Lock()
+
+# Session manager dla przechowywania stanu między odświeżeniami
+session_manager = SessionManager(session_cache_dir=Path("data/projects/.sessions"))
 
 def _standardizer_from_config(config: dict[str, Any], cleanup_overrides: dict[str, Any] | None = None) -> VocalInstrumentalStandardizer:
     """Tworzy standaryzator wokalu z konfiguracji i opcjonalnych nadpisań."""
@@ -167,12 +171,11 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
             "VMS zwraca dopasowaną ścieżkę wokalną; instrumental jest tylko referencją."
         )
 
-        # JavaScript: ostrzeżenie przed zamknięciem i heartbeat
+        # JavaScript: ostrzeżenie przed zamknięciem, heartbeat i synchronizacja localStorage
         demo.load(None, None, None, js="""
             () => {
                 // Ostrzeżenie użytkownika przed zamknięciem karty
                 window.addEventListener('beforeunload', function (e) {
-                    // Standardowy alert w nowoczesnych przeglądarkach
                     e.preventDefault();
                     e.returnValue = '';
                     return "Czy na pewno chcesz opuścić stronę? Procesy w tle mogą zostać przerwane.";
@@ -183,8 +186,22 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                     const btn = document.getElementById('heartbeat_btn');
                     if (btn) btn.click();
                 }
+                setInterval(sendHeartbeat, 5000);
 
-                setInterval(sendHeartbeat, 5000); // Co 5 sekund
+                // Synchronizacja localStorage — odczyt i restore przy załadowaniu
+                window.addEventListener('load', function() {
+                    const storedCleanupSettings = localStorage.getItem('vms_cleanup_settings');
+                    if (storedCleanupSettings) {
+                        try {
+                            const settings = JSON.parse(storedCleanupSettings);
+                            console.log('Restored cleanup settings from localStorage:', settings);
+                            // Restore będzie wykonany przez Gradio callback
+                            window.vmsRestoreSettings = settings;
+                        } catch (e) {
+                            console.error('Failed to parse stored cleanup settings:', e);
+                        }
+                    }
+                });
             }
         """)
 
@@ -195,7 +212,8 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                     "VMS zaproponuje korektę wokalu, a po akceptacji wygeneruje `vocal_processed.wav`. "
                     "`preview_mix.wav` to 20-sekundowy fragment wokół najgłośniejszego momentu wokalu do szybkiej kontroli."
                 )
-                proposal_state = gr.State({})
+                # BrowserState — przechowywane w localStorage przeglądarki, przetrwają refresh
+                proposal_state = gr.BrowserState({})
                 with gr.Row():
                     with gr.Column(scale=1):
                         vocal_audio = gr.Audio(label="Ścieżka wokalna", type="filepath")
@@ -238,11 +256,46 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                         status = gr.Textbox(label="Status", lines=4, interactive=False)
                 report_text = gr.Textbox(label="Raport / rekomendacje", lines=18, interactive=False)
 
+                # Helper: auto-save cleanup settings do localStorage
+                def save_cleanup_settings_to_storage(enabled, dc, hp, hp_hz, de_esser, de_thr, de_ratio, de_max_red, fade, trim, gate, gate_thr, gate_floor):
+                    """Zapisuje ustawienia cleanup w localStorage via JavaScript."""
+                    settings = {
+                        "enabled": enabled,
+                        "remove_dc_offset": dc,
+                        "high_pass_enabled": hp,
+                        "high_pass_hz": hp_hz,
+                        "de_esser_enabled": de_esser,
+                        "de_esser_threshold_db": de_thr,
+                        "de_esser_ratio": de_ratio,
+                        "de_esser_max_reduction_db": de_max_red,
+                        "fade_ms": fade,
+                        "trim_silence_enabled": trim,
+                        "noise_gate_enabled": gate,
+                        "noise_gate_db": gate_thr,
+                        "noise_gate_floor_db": gate_floor,
+                    }
+                    session_manager.save_state("cleanup", "settings", settings)
+                    return None  # Nie zwracamy nic, tylko side-effect
+
                 manual_mode.change(
                     fn=lambda x: gr.update(visible=x),
                     inputs=[manual_mode],
                     outputs=[manual_container]
                 )
+
+                # Auto-save cleanup settings when any of them changes
+                for cleanup_component in [cleanup_enabled, cleanup_dc, cleanup_hp_enabled, cleanup_hp_hz,
+                                         cleanup_de_esser, cleanup_de_esser_threshold, cleanup_de_esser_ratio,
+                                         cleanup_de_esser_max_red, cleanup_fade_ms, cleanup_trim, cleanup_gate,
+                                         cleanup_gate_threshold, cleanup_gate_floor]:
+                    cleanup_component.change(
+                        fn=save_cleanup_settings_to_storage,
+                        inputs=[cleanup_enabled, cleanup_dc, cleanup_hp_enabled, cleanup_hp_hz,
+                               cleanup_de_esser, cleanup_de_esser_threshold, cleanup_de_esser_ratio,
+                               cleanup_de_esser_max_red, cleanup_fade_ms, cleanup_trim, cleanup_gate,
+                               cleanup_gate_threshold, cleanup_gate_floor],
+                        outputs=[],
+                    )
 
                 process_button.click(
                     fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, de_esser, de_thr, de_ratio, de_max_red, fade, trim, gate, gate_thr, gate_floor: _compare_vocal_standardization(
@@ -430,7 +483,8 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                             interactive=False,
                             wrap=True,
                         )
-                        search_state = gr.State([])
+                        # BrowserState dla wyników wyszukiwania — przechowywane w localStorage
+                        search_state = gr.BrowserState([])
 
                 with gr.Accordion("Pobieranie bezpiecznego wyniku", open=False):
                     gr.Markdown(
@@ -516,8 +570,18 @@ def launch(config_path: str = "configs/default.yaml", prevent_thread_lock: bool 
                     logger.warning("Brak aktywnych kart przeglądarki. Zamykanie serwera...")
                     os._exit(0)  # Awaryjne zamknięcie procesu
 
+    # Thread do czyszczenia starych sesji co godzinę
+    def cleanup_old_sessions_periodically():
+        while True:
+            time.sleep(3600)  # Co godzinę
+            session_manager.cleanup_old_sessions(max_age_hours=24)
+            logger.debug("Cleaned up old sessions")
+
     monitor_thread = threading.Thread(target=monitor_activity, daemon=True)
     monitor_thread.start()
+
+    cleanup_thread = threading.Thread(target=cleanup_old_sessions_periodically, daemon=True)
+    cleanup_thread.start()
 
     ui.launch(show_error=True, prevent_thread_lock=prevent_thread_lock, inbrowser=True)
 
