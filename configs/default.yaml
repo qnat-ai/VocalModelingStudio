@@ -8,9 +8,23 @@ audio:
     high_pass_enabled: true
     high_pass_hz: 80.0
     high_pass_order: 2
+    de_esser_enabled: false
+    de_esser_threshold_db: -28.0
+    de_esser_ratio: 3.0
+    de_esser_max_reduction_db: 8.0
+    de_esser_band_low_hz: 4500.0
+    de_esser_band_high_hz: 9500.0
+    de_esser_attack_ms: 4.0
+    de_esser_release_ms: 90.0
+    de_esser_knee_db: 6.0
+    de_esser_stereo_link: true
     fade_ms: 5.0
     noise_gate_enabled: false
     noise_gate_db: -55.0
+    noise_gate_floor_db: -24.0
+    noise_gate_attack_ms: 4.0
+    noise_gate_release_ms: 80.0
+    noise_gate_hold_ms: 20.0
     trim_silence_enabled: false
     trim_silence_db: -60.0
     trim_padding_ms: 50.0

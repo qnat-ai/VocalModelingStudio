@@ -155,8 +155,8 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
     .vms-small-note {font-size: 0.92rem; opacity: 0.82;}
     .vms-warning {border-left: 4px solid #d97706; padding-left: 0.8rem;}
     """
-    with gr.Blocks(title="Vocal Modeling Studio 1.0.4", theme=theme, css=css) as demo:
-        gr.Markdown("# 🎙️ Vocal Modeling Studio — 1.0.4")
+    with gr.Blocks(title="Vocal Modeling Studio 0.1.4", theme=theme, css=css) as demo:
+        gr.Markdown("# 🎙️ Vocal Modeling Studio — 0.1.4")
         gr.Markdown(
             "**Standaryzator wokalu względem instrumentalu.** "
             "VMS zwraca dopasowaną ścieżkę wokalną; instrumental jest tylko referencją."
@@ -215,9 +215,15 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                             cleanup_dc = gr.Checkbox(label="Usuń DC offset", value=True)
                             cleanup_hp_enabled = gr.Checkbox(label="High-pass dla wokalu", value=True)
                             cleanup_hp_hz = gr.Slider(label="High-pass [Hz]", minimum=40, maximum=180, value=80, step=1)
+                            cleanup_de_esser = gr.Checkbox(label="De-esser", value=False)
+                            cleanup_de_esser_threshold = gr.Slider(label="De-esser threshold [dBFS]", minimum=-45, maximum=-12, value=-28, step=1)
+                            cleanup_de_esser_ratio = gr.Slider(label="De-esser ratio", minimum=1.5, maximum=8.0, value=3.0, step=0.1)
+                            cleanup_de_esser_max_red = gr.Slider(label="De-esser max reduction [dB]", minimum=1.0, maximum=18.0, value=8.0, step=0.5)
                             cleanup_fade_ms = gr.Slider(label="Fade safety [ms]", minimum=0, maximum=20, value=5, step=0.5)
                             cleanup_trim = gr.Checkbox(label="Trim ciszy", value=False)
                             cleanup_gate = gr.Checkbox(label="Noise gate", value=False)
+                            cleanup_gate_threshold = gr.Slider(label="Noise gate threshold [dBFS]", minimum=-80, maximum=-20, value=-55, step=1)
+                            cleanup_gate_floor = gr.Slider(label="Noise gate floor [dB]", minimum=-36, maximum=-3, value=-24, step=1)
 
                     with gr.Column(scale=1):
                         proposed_gain = gr.Number(label="Proponowany gain wokalu [dB]", interactive=False)
@@ -234,7 +240,7 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                 )
 
                 process_button.click(
-                    fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, fade, trim, gate: _compare_vocal_standardization(
+                    fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, de_esser, de_thr, de_ratio, de_max_red, fade, trim, gate, gate_thr, gate_floor: _compare_vocal_standardization(
                         config,
                         vocal_path,
                         inst_path,
@@ -243,9 +249,15 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                             "remove_dc_offset": dc,
                             "high_pass_enabled": hp,
                             "high_pass_hz": hp_hz,
+                            "de_esser_enabled": de_esser,
+                            "de_esser_threshold_db": de_thr,
+                            "de_esser_ratio": de_ratio,
+                            "de_esser_max_reduction_db": de_max_red,
                             "fade_ms": fade,
                             "trim_silence_enabled": trim,
                             "noise_gate_enabled": gate,
+                            "noise_gate_db": gate_thr,
+                            "noise_gate_floor_db": gate_floor,
                         },
                     ),
                     inputs=[
@@ -255,14 +267,20 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                         cleanup_dc,
                         cleanup_hp_enabled,
                         cleanup_hp_hz,
+                        cleanup_de_esser,
+                        cleanup_de_esser_threshold,
+                        cleanup_de_esser_ratio,
+                        cleanup_de_esser_max_red,
                         cleanup_fade_ms,
                         cleanup_trim,
                         cleanup_gate,
+                        cleanup_gate_threshold,
+                        cleanup_gate_floor,
                     ],
                     outputs=[proposal_state, report_text, proposed_gain, status],
                 )
                 accept_button.click(
-                    fn=lambda state, mode, gain, enabled, dc, hp, hp_hz, fade, trim, gate: _render_vocal_standardization(
+                    fn=lambda state, mode, gain, enabled, dc, hp, hp_hz, de_esser, de_thr, de_ratio, de_max_red, fade, trim, gate, gate_thr, gate_floor: _render_vocal_standardization(
                         config,
                         state,
                         "correct" if mode else "accept",
@@ -272,9 +290,15 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                             "remove_dc_offset": dc,
                             "high_pass_enabled": hp,
                             "high_pass_hz": hp_hz,
+                            "de_esser_enabled": de_esser,
+                            "de_esser_threshold_db": de_thr,
+                            "de_esser_ratio": de_ratio,
+                            "de_esser_max_reduction_db": de_max_red,
                             "fade_ms": fade,
                             "trim_silence_enabled": trim,
                             "noise_gate_enabled": gate,
+                            "noise_gate_db": gate_thr,
+                            "noise_gate_floor_db": gate_floor,
                         },
                     ),
                     inputs=[
@@ -285,14 +309,20 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                         cleanup_dc,
                         cleanup_hp_enabled,
                         cleanup_hp_hz,
+                        cleanup_de_esser,
+                        cleanup_de_esser_threshold,
+                        cleanup_de_esser_ratio,
+                        cleanup_de_esser_max_red,
                         cleanup_fade_ms,
                         cleanup_trim,
                         cleanup_gate,
+                        cleanup_gate_threshold,
+                        cleanup_gate_floor,
                     ],
                     outputs=[vocal_output, preview_output, output_folder, report_text, status],
                 )
                 try_again_button.click(
-                    fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, fade, trim, gate: _compare_vocal_standardization(
+                    fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, de_esser, de_thr, de_ratio, de_max_red, fade, trim, gate, gate_thr, gate_floor: _compare_vocal_standardization(
                         config,
                         vocal_path,
                         inst_path,
@@ -301,9 +331,15 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                             "remove_dc_offset": dc,
                             "high_pass_enabled": hp,
                             "high_pass_hz": hp_hz,
+                            "de_esser_enabled": de_esser,
+                            "de_esser_threshold_db": de_thr,
+                            "de_esser_ratio": de_ratio,
+                            "de_esser_max_reduction_db": de_max_red,
                             "fade_ms": fade,
                             "trim_silence_enabled": trim,
                             "noise_gate_enabled": gate,
+                            "noise_gate_db": gate_thr,
+                            "noise_gate_floor_db": gate_floor,
                         },
                     ),
                     inputs=[
@@ -313,9 +349,15 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                         cleanup_dc,
                         cleanup_hp_enabled,
                         cleanup_hp_hz,
+                        cleanup_de_esser,
+                        cleanup_de_esser_threshold,
+                        cleanup_de_esser_ratio,
+                        cleanup_de_esser_max_red,
                         cleanup_fade_ms,
                         cleanup_trim,
                         cleanup_gate,
+                        cleanup_gate_threshold,
+                        cleanup_gate_floor,
                     ],
                     outputs=[proposal_state, report_text, proposed_gain, status],
                 )

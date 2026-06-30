@@ -1,8 +1,7 @@
 # Ignore Python bytecode and caches
 __pycache__/
 *.py[cod]
-*.pyc
-.pytest_cache/
+python main.py --check-deps.pytest_cache/
 
 # Virtual environments
 .venv/

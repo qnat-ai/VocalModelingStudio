@@ -1,4 +1,4 @@
-# Vocal Modeling Studio — 1.0.4
+# Vocal Modeling Studio — 0.1.4
 
 > Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, GUI Gradio, integracja Applio.
 
@@ -155,7 +155,7 @@ VMS v0.1.4 wprowadza workflow standaryzacji wokalu względem podkładu instrumen
 1. Wgraj ścieżkę wokalną i opcjonalnie instrumental (jako referencję).
 2. Wybierz **PORÓWNAJ / ZAPROPONUJ** — VMS przeanalizuje poziomy i zasugeruje optymalny gain.
 3. Wybierz akcję:
-   - **ACCEPT**: zastosuj propozcyję i wygeneruj `vocal_processed.wav`.
+   - **ACCEPT**: zastosuj propozycję i wygeneruj `vocal_processed.wav`.
    - **CORRECT**: wprowadź ręczną korektę i wygeneruj wynik.
    - **TRY AGAIN**: zresetuj i spróbuj innej analizy.
 
@@ -164,7 +164,7 @@ Dokumentacja: `docs/VOCAL_STANDARDIZER_PL.md`.
 
 ## Integracja Applio (Voice Conversion)
 
-Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersji głosu (RVC). 
+Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersji głosu. 
 
 1. Upewnij się, że Applio jest zainstalowane i działa (domyślnie na http://127.0.0.1:6969).
 2. Sprawdź dostępne punkty końcowe API za pomocą narzędzia:
@@ -172,13 +172,12 @@ Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersj
    python app/engines/applio/probe.py --url http://127.0.0.1:6969
    ```
 3. Skonfiguruj `api_name` oraz `param_map` w `configs/default.yaml` zgodnie z wynikiem powyższego narzędzia.
-```
 
 ## Host i backend FX
 
-- Wybrany host do workflow zewnetrznego: **REAPER** (najlepszy kompromis automatyzacja/jakosc/stabilnosc).
+- Wybrany host do workflow zewnętrznego: **REAPER** (najlepszy kompromis automatyzacja/jakość/stabilność).
 - Backend FX w VMS: **FFmpeg** przez `ExternalFxBridge` (preset `ffmpeg_vocal_polish` w `configs/default.yaml`).
-- Integracje z `iZotope RX`, `Acon`, `Waves`, `Melodyne` sa odlozone na pozniej.
+- Integracje z `iZotope RX`, `Acon`, `Waves`, `Melodyne` są odłożone na później.
 
 ## Testy
 
@@ -218,51 +217,5 @@ integration:
   external_fx:
     enabled: false
     command_template: []
-
-quality_guardrails:
-  fail_safe_enabled: true
 ```
-
-## Status funkcji
-
-| Funkcja | Status |
-|---|---|
-| Import WAV/MP3 | działa |
-| Quality report (`before/after/delta/guardrails`) | działa |
-| Mastering basic + adaptive + fail-safe | działa |
-| Audacity / Melodyne export | działa (eksport do plików tymczasowych/wav) |
-| Batch processing | działa |
-| Realtime diagnostics / monitoring | działa częściowo |
-| Pitch correction audio rewrite | placeholder (na razie raport F0 + nuty) |
-| Voice conversion (`applio_gradio`) | działa (wymaga działającego serwera Applio) |
-| DeepFilterNet | placeholder |
-| GUI (Gradio) | działa (`main.py --gui`) |
-| API Search (Freesound/Archive) | działa (`search_sources.py`) |
-
-## Session folder per run
-
-Każde uruchomienie pipeline tworzy osobną sesję:
-
-```text
-data/projects/<timestamp>_<input_name>/
-  input/
-  work/
-  output/
-  reports/
-  metadata/
-  session.yaml
-```
-
-To porządkuje wiele wersji wokalu i rozdziela raporty między runami.
-
-## Search CLI (Freesound + Archive.org)
-
-Nowe flagi w `search_sources.py` wspierają API search i opcjonalne pobranie tylko bezpiecznych licencji:
-
-```bash
-python search_sources.py --title "vocal one shot" --freesound --freesound-api-key YOUR_TOKEN --limit 5
-python search_sources.py --title "public domain vocals" --archive --download-legal
-```
-
-Tryb `--download-legal` pobiera wyłącznie wyniki sklasyfikowane jako `safe`.
 

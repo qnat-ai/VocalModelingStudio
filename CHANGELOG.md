@@ -1,25 +1,18 @@
 # CHANGELOG
 
-## [1.0.4] — 2026-06-30
+## [0.1.4] — 2026-06-30
 
 ### Dodano
 - Domknięcie cleanup patcha: `docs/VOCAL_CLEANUP_PL.md` i testy `tests/test_vocal_cleanup.py`.
 - `CleanupReport` i `process_cleanup_with_report` w `app/audio/cleanup.py`.
 - Konfigurowalny high-pass (`high_pass_enabled`, `high_pass_hz`, `high_pass_order`) oraz `noise_gate_enabled` i `trim_padding_ms`.
+- Opcjonalny de-esser w cleanup (`de_esser_enabled`, `de_esser_threshold_db`, `de_esser_ratio`, pasmo sybilantów).
+- Rozszerzony de-esser: soft-knee, attack/release i stereo link.
+- Rozszerzony noise gate: floor gain + hold/attack/release (łagodniejsza redukcja szumu tła).
+- Raport de-essera: sibilant_band_before/after_rms, estimated_reduction_db, de_esser_active.
+- Ocena agresywności cleanup: cleanup_intensity (none/light/medium/strong), risk_level (low/medium/high), risk_warnings.
 - Szybki dependency check: `app/utils/dependency_check.py`, `tools/check_dependencies.py` i flaga CLI `--check-deps`.
 - Preset `ffmpeg_vocal_polish` jako backend FX w `configs/default.yaml`.
-
-### Zmieniono
-- Standaryzator wokalu raportuje cleanup i stosuje cleanup przed dopasowaniem gain.
-- GUI (`app/gui/gradio/interface.py`) zawiera sekcje `Cleanup wokalu` i wersje `1.0.4`.
-- Wybor hosta zewnetrznego: REAPER jako rekomendowany host workflow.
-
-### Odłożono
-- Integracje `iZotope RX`, `Acon`, `Waves`, `Melodyne` pozostaja poza zakresem tej wersji.
-
-## [0.1.4] — 2026-06-30
-
-### Dodano
 - Nowy moduł `app/standardization/`: standaryzacja wokalu względem instrumentalu (vocal standardizer for instrumental).
 - Workflow standaryzacji: analiza (`analyze`) i generowanie wyniku (`render`) z trybami `ACCEPT`, `CORRECT`, `TRY AGAIN`.
 - Nowy panel w GUI: zakładka "Standaryzacja wokalu" jako główny punkt wejścia.
@@ -29,6 +22,9 @@
 - Ostrzeżenie przed przypadkowym zamknięciem karty przeglądarki (JavaScript `onbeforeunload`) w interfejsie Gradio.
 
 ### Zmieniono
+- Standaryzator wokalu raportuje cleanup i stosuje cleanup przed dopasowaniem gain.
+- GUI (`app/gui/gradio/interface.py`) zawiera sekcje `Cleanup wokalu` i wersję `0.1.4`.
+- Wybór hosta zewnętrznego: REAPER jako rekomendowany host workflow.
 - Przebudowano interfejs Gradio w `app/gui/gradio/interface.py` wokół nowego workflow standaryzacji.
 - "Diagnostyka" w GUI przemianowana na "Narzędzia / Ustawienia".
 - Rozszerzono modele wyszukiwania w `app/search/models.py` o pola `genre` i `license_hint`.
@@ -36,6 +32,9 @@
 - Doprecyzowano status integracji z DAW i profesjonalnymi narzędziami edytorskimi.
 - Dodano wzmiankę o Melodyne w komentarzach technicznych `app/audio/pitch.py`.
 - Poprawiono spójność informacji o roli ASIO w projekcie (fundament pod niską latencję).
+
+### Odłożono
+- Integracje `iZotope RX`, `Acon`, `Waves`, `Melodyne` pozostają poza zakresem tej wersji.
 
 ## [0.1.3] — 2026-06-29
 
@@ -93,11 +92,11 @@
 - Placeholder `.gitkeep` w `data/work`, `data/output`, `data/projects`.
 
 ### Zmieniono
-- `VERSION` → `0.1.0`.
+- `VERSION` → `0.1.4`.
 - `README.md` — ujednolicony tytuł, tabela statusu funkcji, opis session folderów i search CLI.
 - `CHANGELOG.md` — przepisany pod nowy schemat wersjonowania.
 
 ### Decyzje projektowe
-- Wersja startowa `0.1.0` — projekt jest teraz spójnym, publicznym repozytorium.
+- Wersja startowa `0.1.4` — projekt jest teraz spójnym, publicznym repozytorium.
 - Ciężkie modele AI (DeepFilterNet, RVC, Seed-VC) pozostają placeholderami z interfejsem gotowym do podpięcia.
 - Pitch correction jest na razie nieinwazyjna — raport diagnostyczny, bez modyfikacji audio.
