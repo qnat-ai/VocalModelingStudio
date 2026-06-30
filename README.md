@@ -1,4 +1,4 @@
-# Vocal Modeling Studio — 0.1.4
+# Vocal Modeling Studio — 1.0.4
 
 > Lokalny workflow, monitoring realtime, ASIO4ALL, sounddevice, batch processing, GUI Gradio, integracja Applio.
 
@@ -44,6 +44,12 @@ Na tym etapie zakładamy:
 
     ```bash
     python main.py --input data/input/moj_wokal.wav
+    ```
+
+6. Szybki dependency check (zalecane po aktualizacji):
+
+    ```bash
+    python main.py --check-deps
     ```
 
    Batch processing (folder wejściowy):
@@ -167,6 +173,12 @@ Projekt wykorzystuje zewnętrzny silnik **Applio** do wysokiej jakości konwersj
    ```
 3. Skonfiguruj `api_name` oraz `param_map` w `configs/default.yaml` zgodnie z wynikiem powyższego narzędzia.
 ```
+
+## Host i backend FX
+
+- Wybrany host do workflow zewnetrznego: **REAPER** (najlepszy kompromis automatyzacja/jakosc/stabilnosc).
+- Backend FX w VMS: **FFmpeg** przez `ExternalFxBridge` (preset `ffmpeg_vocal_polish` w `configs/default.yaml`).
+- Integracje z `iZotope RX`, `Acon`, `Waves`, `Melodyne` sa odlozone na pozniej.
 
 ## Testy
 

@@ -3,11 +3,17 @@ audio:
   mono: false
   normalize_peak_db: -1.0
   cleanup:
+    enabled: true
     remove_dc_offset: true
+    high_pass_enabled: true
+    high_pass_hz: 80.0
+    high_pass_order: 2
     fade_ms: 5.0
+    noise_gate_enabled: false
     noise_gate_db: -55.0
     trim_silence_enabled: false
     trim_silence_db: -60.0
+    trim_padding_ms: 50.0
     gain_stage_target_db: -20.0
 
 processing:
@@ -83,10 +89,18 @@ integration:
   external_fx:
     enabled: false
     strict: false
-    command_preset: wrapper_cleanup
+    command_preset: ffmpeg_vocal_polish
     command_template: []
-    preset: wrapper_cleanup
+    preset: ffmpeg_vocal_polish
     preset_library:
+      ffmpeg_vocal_polish:
+        - ffmpeg
+        - -y
+        - -i
+        - "{input}"
+        - -af
+        - "highpass=f=80,acompressor=threshold=-20dB:ratio=2.0:attack=5:release=50,loudnorm=I=-16:TP=-1.0:LRA=7"
+        - "{output}"
       wrapper_cleanup:
         - python
         - tools/external_fx_chain.py

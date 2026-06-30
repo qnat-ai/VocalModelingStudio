@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.cli.batch_runner import collect_input_files, run_batch
 from app.core.pipeline import VocalPipeline
+from app.utils.dependency_check import check_dependencies, format_dependency_report
 from app.utils.config import load_config
 
 
@@ -22,7 +23,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/default.yaml")
     parser.add_argument("--audacity-export", action="store_true", help="Eksport pliku roboczego dla Audacity")
     parser.add_argument("--gui", action="store_true", help="Uruchom interfejs graficzny Gradio")
+    parser.add_argument("--check-deps", action="store_true", help="Sprawdź zależności zewnętrzne (ffmpeg/demucs/rvc/rx_cli) i zakończ")
     args = parser.parse_args()
+    if args.check_deps:
+        return args
     if not args.gui:
         if bool(args.input) == bool(args.input_dir):
             parser.error("Podaj dokładnie jedno: --input albo --input-dir (chyba że używasz --gui)")
@@ -33,7 +37,15 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    
+
+    if args.check_deps:
+        statuses = check_dependencies()
+        print(format_dependency_report(statuses), end="")
+        missing_required = [item for item in statuses if item.required and not item.available]
+        if missing_required:
+            raise SystemExit(1)
+        return
+
     if args.gui:
         from app.gui.gradio.interface import launch
         launch(config_path=args.config)

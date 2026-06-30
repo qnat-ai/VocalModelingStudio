@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## [1.0.4] — 2026-06-30
+
+### Dodano
+- Domknięcie cleanup patcha: `docs/VOCAL_CLEANUP_PL.md` i testy `tests/test_vocal_cleanup.py`.
+- `CleanupReport` i `process_cleanup_with_report` w `app/audio/cleanup.py`.
+- Konfigurowalny high-pass (`high_pass_enabled`, `high_pass_hz`, `high_pass_order`) oraz `noise_gate_enabled` i `trim_padding_ms`.
+- Szybki dependency check: `app/utils/dependency_check.py`, `tools/check_dependencies.py` i flaga CLI `--check-deps`.
+- Preset `ffmpeg_vocal_polish` jako backend FX w `configs/default.yaml`.
+
+### Zmieniono
+- Standaryzator wokalu raportuje cleanup i stosuje cleanup przed dopasowaniem gain.
+- GUI (`app/gui/gradio/interface.py`) zawiera sekcje `Cleanup wokalu` i wersje `1.0.4`.
+- Wybor hosta zewnetrznego: REAPER jako rekomendowany host workflow.
+
+### Odłożono
+- Integracje `iZotope RX`, `Acon`, `Waves`, `Melodyne` pozostaja poza zakresem tej wersji.
+
 ## [0.1.4] — 2026-06-30
 
 ### Dodano

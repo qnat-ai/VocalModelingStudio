@@ -17,6 +17,7 @@ from typing import Any, Literal
 import librosa
 import numpy as np
 import soundfile as sf
+from app.audio.cleanup import CleanupReport, CleanupSettings, process_cleanup_with_report
 
 StandardizationAction = Literal["accept", "correct", "try_again"]
 
@@ -71,6 +72,7 @@ class StandardizationReport:
     preview_mix_path: str | None
     report_path: str | None
     created_at: str
+    cleanup_report: CleanupReport | None = None
     notes: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
@@ -101,6 +103,8 @@ class StandardizationReport:
         if self.recommendation.suggestions:
             lines.extend(["", "Sugestie:"])
             lines.extend(f"- {suggestion}" for suggestion in self.recommendation.suggestions)
+        if self.cleanup_report:
+            lines.extend(["", *self.cleanup_report.to_text_lines()])
 
         lines.extend(
             [
@@ -151,6 +155,7 @@ class VocalInstrumentalStandardizer:
         max_gain_correction_db: float = 12.0,
         no_instrumental_target_peak_dbfs: float = -1.0,
         preview_mix_peak_dbfs: float = -1.0,
+        cleanup_settings: CleanupSettings | None = None,
     ) -> None:
         self.sample_rate = int(sample_rate)
         self.output_dir = Path(output_dir)
@@ -158,6 +163,7 @@ class VocalInstrumentalStandardizer:
         self.max_gain_correction_db = abs(float(max_gain_correction_db))
         self.no_instrumental_target_peak_dbfs = float(no_instrumental_target_peak_dbfs)
         self.preview_mix_peak_dbfs = float(preview_mix_peak_dbfs)
+        self.cleanup_settings = cleanup_settings or CleanupSettings()
 
     def analyze(
         self,
@@ -180,6 +186,7 @@ class VocalInstrumentalStandardizer:
             output_vocal_path=None,
             preview_mix_path=None,
             report_path=None,
+            cleanup_report=None,
         )
 
     def render(
@@ -219,7 +226,9 @@ class VocalInstrumentalStandardizer:
         output_session_dir = self._session_dir(vocal_path=vocal_path, session_name=session_name)
         output_session_dir.mkdir(parents=True, exist_ok=True)
 
-        adjusted_vocal = apply_gain_db(vocal_audio, gain_db)
+        cleaned_vocal, cleanup_report = process_cleanup_with_report(vocal_audio, sr, self.cleanup_settings)
+
+        adjusted_vocal = apply_gain_db(cleaned_vocal, gain_db)
         adjusted_vocal = limit_peak(adjusted_vocal, dbfs=-1.0)
         output_vocal_path = output_session_dir / "vocal_processed.wav"
         self._save_audio(output_vocal_path, adjusted_vocal, sr)
@@ -248,6 +257,7 @@ class VocalInstrumentalStandardizer:
             preview_mix_path=preview_mix_path,
             report_path=report_path,
             vocal_audio_after=adjusted_vocal,
+            cleanup_report=cleanup_report,
         )
         report_path.write_text(final_report.to_json(), encoding="utf-8")
         report_text_path = output_session_dir / "vocal_standardization_report.txt"
@@ -274,6 +284,7 @@ class VocalInstrumentalStandardizer:
         preview_mix_path: Path | None,
         report_path: Path | None,
         vocal_audio_after: np.ndarray | None = None,
+        cleanup_report: CleanupReport | None = None,
     ) -> StandardizationReport:
         vocal_metrics = analyze_track(vocal_audio, sr, source=str(vocal_path))
         instrumental_metrics = (
@@ -297,6 +308,7 @@ class VocalInstrumentalStandardizer:
             preview_mix_path=str(preview_mix_path) if preview_mix_path else None,
             report_path=str(report_path) if report_path else None,
             created_at=datetime.now().isoformat(timespec="seconds"),
+            cleanup_report=cleanup_report,
             notes=notes,
         )
 

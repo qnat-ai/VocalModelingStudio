@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import gradio as gr
+from app.audio.cleanup import CleanupSettings
 from app.core.pipeline import VocalPipeline
 from app.gui.gradio.legal_search_panel import (
     RESULT_HEADERS,
@@ -28,10 +29,13 @@ logger = logging.getLogger("vms.gui")
 last_heartbeat = time.time()
 heartbeat_lock = threading.Lock()
 
-def _standardizer_from_config(config: dict[str, Any]) -> VocalInstrumentalStandardizer:
+def _standardizer_from_config(config: dict[str, Any], cleanup_overrides: dict[str, Any] | None = None) -> VocalInstrumentalStandardizer:
     audio_cfg = config.get("audio", {})
     paths_cfg = config.get("paths", {})
     standardization_cfg = config.get("standardization", {})
+    cleanup_cfg = dict(audio_cfg.get("cleanup", {}))
+    if cleanup_overrides:
+        cleanup_cfg.update(cleanup_overrides)
     return VocalInstrumentalStandardizer(
         sample_rate=int(audio_cfg.get("sample_rate", 48000)),
         output_dir=Path(paths_cfg.get("standardized_output_dir", "data/output/standardized")),
@@ -41,6 +45,7 @@ def _standardizer_from_config(config: dict[str, Any]) -> VocalInstrumentalStanda
         max_gain_correction_db=float(standardization_cfg.get("max_gain_correction_db", 12.0)),
         no_instrumental_target_peak_dbfs=float(standardization_cfg.get("no_instrumental_target_peak_dbfs", -1.0)),
         preview_mix_peak_dbfs=float(standardization_cfg.get("preview_mix_peak_dbfs", -1.0)),
+        cleanup_settings=CleanupSettings.from_mapping(cleanup_cfg),
     )
 
 
@@ -55,6 +60,7 @@ def _compare_vocal_standardization(
     config: dict[str, Any],
     vocal_path: str | None,
     instrumental_path: str | None,
+    cleanup_overrides: dict[str, Any] | None,
 ) -> tuple[dict[str, Any], str, float, str]:
     if not vocal_path:
         return {}, "", 0.0, "Błąd: wgraj ścieżkę wokalną."
@@ -65,7 +71,7 @@ def _compare_vocal_standardization(
         return {}, "", 0.0, "Błąd: nie znaleziono pliku ścieżki wokalnej."
 
     try:
-        standardizer = _standardizer_from_config(config)
+        standardizer = _standardizer_from_config(config, cleanup_overrides)
         report = standardizer.analyze(vocal_path=vocal, instrumental_path=instrumental)
     except Exception as exc:
         logger.exception("Standardization analyze failed: %s", exc)
@@ -86,6 +92,7 @@ def _render_vocal_standardization(
     state: dict[str, Any] | None,
     action: str,
     manual_gain_db: float | int | None,
+    cleanup_overrides: dict[str, Any] | None,
 ) -> tuple[str | None, str | None, str, str, str]:
     if not state:
         return None, None, "", "", "Najpierw kliknij PORÓWNAJ / ZAPROPONUJ."
@@ -96,7 +103,7 @@ def _render_vocal_standardization(
         return None, None, "", "", "Brak ścieżki wokalnej w stanie GUI."
 
     try:
-        standardizer = _standardizer_from_config(config)
+        standardizer = _standardizer_from_config(config, cleanup_overrides)
         result = standardizer.render(
             vocal_path=Path(vocal_path),
             instrumental_path=Path(instrumental_path) if instrumental_path else None,
@@ -148,8 +155,8 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
     .vms-small-note {font-size: 0.92rem; opacity: 0.82;}
     .vms-warning {border-left: 4px solid #d97706; padding-left: 0.8rem;}
     """
-    with gr.Blocks(title="Vocal Modeling Studio 0.1.4", theme=theme, css=css) as demo:
-        gr.Markdown("# 🎙️ Vocal Modeling Studio — 0.1.4")
+    with gr.Blocks(title="Vocal Modeling Studio 1.0.4", theme=theme, css=css) as demo:
+        gr.Markdown("# 🎙️ Vocal Modeling Studio — 1.0.4")
         gr.Markdown(
             "**Standaryzator wokalu względem instrumentalu.** "
             "VMS zwraca dopasowaną ścieżkę wokalną; instrumental jest tylko referencją."
@@ -203,7 +210,15 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                         with gr.Row():
                             accept_button = gr.Button("ACCEPT")
                             try_again_button = gr.Button("TRY AGAIN")
-                            
+                        with gr.Accordion("Cleanup wokalu", open=False):
+                            cleanup_enabled = gr.Checkbox(label="Włącz lekki cleanup", value=True)
+                            cleanup_dc = gr.Checkbox(label="Usuń DC offset", value=True)
+                            cleanup_hp_enabled = gr.Checkbox(label="High-pass dla wokalu", value=True)
+                            cleanup_hp_hz = gr.Slider(label="High-pass [Hz]", minimum=40, maximum=180, value=80, step=1)
+                            cleanup_fade_ms = gr.Slider(label="Fade safety [ms]", minimum=0, maximum=20, value=5, step=0.5)
+                            cleanup_trim = gr.Checkbox(label="Trim ciszy", value=False)
+                            cleanup_gate = gr.Checkbox(label="Noise gate", value=False)
+
                     with gr.Column(scale=1):
                         proposed_gain = gr.Number(label="Proponowany gain wokalu [dB]", interactive=False)
                         vocal_output = gr.Audio(label="Wynik główny: vocal_processed.wav")
@@ -219,18 +234,89 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                 )
 
                 process_button.click(
-                    fn=lambda vocal_path, inst_path: _compare_vocal_standardization(config, vocal_path, inst_path),
-                    inputs=[vocal_audio, instrumental_audio],
+                    fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, fade, trim, gate: _compare_vocal_standardization(
+                        config,
+                        vocal_path,
+                        inst_path,
+                        {
+                            "enabled": enabled,
+                            "remove_dc_offset": dc,
+                            "high_pass_enabled": hp,
+                            "high_pass_hz": hp_hz,
+                            "fade_ms": fade,
+                            "trim_silence_enabled": trim,
+                            "noise_gate_enabled": gate,
+                        },
+                    ),
+                    inputs=[
+                        vocal_audio,
+                        instrumental_audio,
+                        cleanup_enabled,
+                        cleanup_dc,
+                        cleanup_hp_enabled,
+                        cleanup_hp_hz,
+                        cleanup_fade_ms,
+                        cleanup_trim,
+                        cleanup_gate,
+                    ],
                     outputs=[proposal_state, report_text, proposed_gain, status],
                 )
                 accept_button.click(
-                    fn=lambda state, mode, gain: _render_vocal_standardization(config, state, "correct" if mode else "accept", gain),
-                    inputs=[proposal_state, manual_mode, manual_gain],
+                    fn=lambda state, mode, gain, enabled, dc, hp, hp_hz, fade, trim, gate: _render_vocal_standardization(
+                        config,
+                        state,
+                        "correct" if mode else "accept",
+                        gain,
+                        {
+                            "enabled": enabled,
+                            "remove_dc_offset": dc,
+                            "high_pass_enabled": hp,
+                            "high_pass_hz": hp_hz,
+                            "fade_ms": fade,
+                            "trim_silence_enabled": trim,
+                            "noise_gate_enabled": gate,
+                        },
+                    ),
+                    inputs=[
+                        proposal_state,
+                        manual_mode,
+                        manual_gain,
+                        cleanup_enabled,
+                        cleanup_dc,
+                        cleanup_hp_enabled,
+                        cleanup_hp_hz,
+                        cleanup_fade_ms,
+                        cleanup_trim,
+                        cleanup_gate,
+                    ],
                     outputs=[vocal_output, preview_output, output_folder, report_text, status],
                 )
                 try_again_button.click(
-                    fn=lambda vocal_path, inst_path: _compare_vocal_standardization(config, vocal_path, inst_path),
-                    inputs=[vocal_audio, instrumental_audio],
+                    fn=lambda vocal_path, inst_path, enabled, dc, hp, hp_hz, fade, trim, gate: _compare_vocal_standardization(
+                        config,
+                        vocal_path,
+                        inst_path,
+                        {
+                            "enabled": enabled,
+                            "remove_dc_offset": dc,
+                            "high_pass_enabled": hp,
+                            "high_pass_hz": hp_hz,
+                            "fade_ms": fade,
+                            "trim_silence_enabled": trim,
+                            "noise_gate_enabled": gate,
+                        },
+                    ),
+                    inputs=[
+                        vocal_audio,
+                        instrumental_audio,
+                        cleanup_enabled,
+                        cleanup_dc,
+                        cleanup_hp_enabled,
+                        cleanup_hp_hz,
+                        cleanup_fade_ms,
+                        cleanup_trim,
+                        cleanup_gate,
+                    ],
                     outputs=[proposal_state, report_text, proposed_gain, status],
                 )
 
@@ -341,6 +427,7 @@ def create_ui(config: dict[str, Any], pipeline: VocalPipeline):
                     "- lista urządzeń audio / ASIO / WASAPI / sounddevice,\n"
                     "- status backendów, np. Applio,\n"
                     "- ścieżki do narzędzi zewnętrznych, np. ffmpeg,\n"
+                    "- rekomendowany host zewnętrzny: REAPER (render/batch),\n"
                     "- informacje o środowisku.\n\n"
                     "Główny workflow znajduje się w zakładce **Standaryzacja wokalu**."
                 )
